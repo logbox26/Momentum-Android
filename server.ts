@@ -83,12 +83,15 @@ app.get('/api/export-android-project', async (_req, res) => {
     const fs = await import('fs');
     const zip = new JSZip();
 
-    const androidDir = path.join(__dirname, 'android');
+    const rootDir = __dirname;
+    const excluded = new Set(['node_modules', 'dist']);
 
     function addDirToZip(currentDir: string, zipFolder: any) {
       if (!fs.existsSync(currentDir)) return;
       const items = fs.readdirSync(currentDir);
       for (const item of items) {
+        if (excluded.has(item)) continue;
+        if (item.endsWith('.zip')) continue;
         const fullPath = path.join(currentDir, item);
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
@@ -101,15 +104,15 @@ app.get('/api/export-android-project', async (_req, res) => {
       }
     }
 
-    addDirToZip(androidDir, zip);
+    addDirToZip(rootDir, zip);
 
     const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="momentum-android-app.zip"');
+    res.setHeader('Content-Disposition', 'attachment; filename="momentum-github-export.zip"');
     return res.send(buffer);
   } catch (err) {
-    console.error('Android Export Error:', err);
-    return res.status(500).json({ error: 'Failed to generate Android project zip' });
+    console.error('Project Export Error:', err);
+    return res.status(500).json({ error: 'Failed to generate project export zip' });
   }
 });
 
