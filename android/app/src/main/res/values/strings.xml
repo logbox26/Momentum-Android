@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Momentum</string>
+    <string name="tasks_did_today">Tasks Did Today</string>
+    <string name="daily_completion">Daily Completion</string>
+    <string name="weekly_completion">Weekly Completion</string>
+    <string name="monthly_completion">Monthly Completion</string>
+    <string name="unfinished_tasks">Unfinished Tasks</string>
+</resources>

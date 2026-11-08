@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Momentum Themes */
+/* 1. Calm Blue: Soft blue, light neutral, dark blue accents */
+body[data-theme="calm-blue"] {
+  --bg-app: #f0f6fc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #e6f0fa;
+  --bg-highlight: #dbeafe;
+  --border-subtle: #d0e1fd;
+  --border-strong: #93c5fd;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent-primary: #1d4ed8;
+  --accent-secondary: #2563eb;
+  --accent-hover: #1e40af;
+  --accent-contrast: #ffffff;
+  --card-today: #e0edfd;
+  --card-today-border: #93c5fd;
+  --badge-bg: #dbeafe;
+  --badge-text: #1e40af;
+}
+
+/* 2. Sage Green: Muted sage, cream, dark green accents */
+body[data-theme="sage-green"] {
+  --bg-app: #f4f7f4;
+  --bg-surface: #fdfbf7;
+  --bg-surface-elevated: #e8efe8;
+  --bg-highlight: #dcfce7;
+  --border-subtle: #dbe4db;
+  --border-strong: #86efac;
+  --text-primary: #142818;
+  --text-secondary: #36533c;
+  --text-muted: #526f58;
+  --accent-primary: #166534;
+  --accent-secondary: #15803d;
+  --accent-hover: #14532d;
+  --accent-contrast: #ffffff;
+  --card-today: #e2ede2;
+  --card-today-border: #86efac;
+  --badge-bg: #dcfce7;
+  --badge-text: #166534;
+}
+
+/* 3. Warm Focus: Cream, beige, orange, charcoal */
+body[data-theme="warm-focus"] {
+  --bg-app: #fbf7f0;
+  --bg-surface: #fffdfa;
+  --bg-surface-elevated: #f3ede2;
+  --bg-highlight: #ffedd5;
+  --border-subtle: #e7dfd2;
+  --border-strong: #fdba74;
+  --text-primary: #292524;
+  --text-secondary: #57534e;
+  --text-muted: #78716c;
+  --accent-primary: #ea580c;
+  --accent-secondary: #f97316;
+  --accent-hover: #c2410c;
+  --accent-contrast: #ffffff;
+  --card-today: #fdeddc;
+  --card-today-border: #fdba74;
+  --badge-bg: #ffedd5;
+  --badge-text: #9a3412;
+}
+
+/* 4. Modern Slate: Light grey, slate, blue, dark slate */
+body[data-theme="modern-slate"] {
+  --bg-app: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #e2e8f0;
+  --bg-highlight: #e0f2fe;
+  --border-subtle: #cbd5e1;
+  --border-strong: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-primary: #2563eb;
+  --accent-secondary: #3b82f6;
+  --accent-hover: #1d4ed8;
+  --accent-contrast: #ffffff;
+  --card-today: #e2e8f0;
+  --card-today-border: #94a3b8;
+  --badge-bg: #e2e8f0;
+  --badge-text: #0f172a;
+}
+
+/* 5. Deep Focus: Dark charcoal, muted blue/green, high contrast */
+body[data-theme="deep-focus"] {
+  --bg-app: #0e1115;
+  --bg-surface: #181c22;
+  --bg-surface-elevated: #222730;
+  --bg-highlight: #1e293b;
+  --border-subtle: #2d3440;
+  --border-strong: #475569;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent-primary: #0d9488;
+  --accent-secondary: #14b8a6;
+  --accent-hover: #0f766e;
+  --accent-contrast: #ffffff;
+  --card-today: #1e2836;
+  --card-today-border: #0d9488;
+  --badge-bg: #134e4a;
+  --badge-text: #5eead4;
+}
+
+/* Smooth theme transitions */
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
