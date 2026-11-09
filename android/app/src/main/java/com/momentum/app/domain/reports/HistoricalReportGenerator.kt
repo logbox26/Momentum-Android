@@ -43,18 +43,38 @@ class HistoricalReportGenerator {
         // 7 days ago
         val weekAgoMs = todayStartMs - (6 * 86400000L)
 
-        // Daily
-        val dailyCompleted = history.count {
-            it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= todayStartMs
-        }
+        // Daily: unique tasks completed today
+        val dailyCompleted = history
+            .filter { it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= todayStartMs }
+            .map { it.taskId }
+            .distinct()
+            .count { taskId ->
+                val task = tasks.firstOrNull { it.id == taskId }
+                if (task != null) {
+                    task.status == com.momentum.app.domain.model.TaskStatus.COMPLETED
+                } else {
+                    val taskEvents = history.filter { it.taskId == taskId }
+                    taskEvents.maxByOrNull { it.timestamp }?.eventType == HistoryEventType.TASK_COMPLETED
+                }
+            }
         val dailyScheduled = tasks.count { it.dueDate == todayStr }
         val dailyTotal = maxOf(dailyCompleted, dailyScheduled)
         val dailyRate = if (dailyTotal > 0) (dailyCompleted.toFloat() / dailyTotal.toFloat()) * 100f else 0f
 
-        // Weekly
-        val weeklyCompleted = history.count {
-            it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= weekAgoMs
-        }
+        // Weekly: unique tasks completed in past 7 days
+        val weeklyCompleted = history
+            .filter { it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= weekAgoMs }
+            .map { it.taskId }
+            .distinct()
+            .count { taskId ->
+                val task = tasks.firstOrNull { it.id == taskId }
+                if (task != null) {
+                    task.status == com.momentum.app.domain.model.TaskStatus.COMPLETED
+                } else {
+                    val taskEvents = history.filter { it.taskId == taskId }
+                    taskEvents.maxByOrNull { it.timestamp }?.eventType == HistoryEventType.TASK_COMPLETED
+                }
+            }
         val weeklyActiveTasks = tasks.count {
             it.createdDate >= weekAgoMs || (it.dueDate >= dateFormat.format(Date(weekAgoMs)) && it.dueDate <= todayStr)
         }

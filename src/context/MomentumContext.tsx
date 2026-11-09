@@ -170,10 +170,13 @@ export const MomentumProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     todayStart.setHours(0, 0, 0, 0);
     const startMs = todayStart.getTime();
 
-    return tasks.filter((t) => {
-      if (t.status !== 'COMPLETED' || !t.completedAt) return false;
-      return t.completedAt >= startMs;
+    const uniqueCompletedTasks = new Map<string, TaskEntity>();
+    tasks.forEach((t) => {
+      if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= startMs) {
+        uniqueCompletedTasks.set(t.id, t);
+      }
     });
+    return Array.from(uniqueCompletedTasks.values());
   }, [tasks]);
 
   // Tasks due today (pending or postponed, scheduled for today)

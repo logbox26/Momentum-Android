@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.momentum.app.data.local.entity.CategoryEntity
 import com.momentum.app.data.local.entity.TaskEntity
 import com.momentum.app.data.repository.MomentumRepository
+import com.momentum.app.domain.model.HistoryEventType
 import com.momentum.app.domain.model.Priority
 import com.momentum.app.domain.model.TaskStatus
 import com.momentum.app.ui.components.TaskItemCard
@@ -52,10 +53,22 @@ fun HomeScreen(
     var editingTask by remember { mutableStateOf<TaskEntity?>(null) }
     var taskForHistory by remember { mutableStateOf<TaskEntity?>(null) }
 
-    // Count of tasks completed today
-    val todayCompletedCount = remember(history) {
+    // Count of unique tasks completed today
+    val todayCompletedCount = remember(history, tasks) {
         val todayStart = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(todayStr)?.time ?: 0L
-        history.count { it.eventType == "TASK_COMPLETED" && it.timestamp >= todayStart }
+        history
+            .filter { it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= todayStart }
+            .map { it.taskId }
+            .distinct()
+            .count { taskId ->
+                val task = tasks.firstOrNull { it.id == taskId }
+                if (task != null) {
+                    task.status == TaskStatus.COMPLETED
+                } else {
+                    val taskEvents = history.filter { it.taskId == taskId }
+                    taskEvents.maxByOrNull { it.timestamp }?.eventType == HistoryEventType.TASK_COMPLETED
+                }
+            }
     }
 
     // Filter tasks

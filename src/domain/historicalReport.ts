@@ -399,23 +399,62 @@ export function calculateFourTiles(
   todayStart.setHours(0, 0, 0, 0);
   const todayStartMs = todayStart.getTime();
 
-  const completedTodayTasks = tasks.filter(
-    (t) => t.status === 'COMPLETED' && t.completedAt && t.completedAt >= todayStartMs
-  );
+  // 1. Daily Completion Rate (unique task IDs completed today)
+  const dailyCompletedTaskIds = new Set<string>();
+  history
+    .filter((h) => h.eventType === 'TASK_COMPLETED' && h.timestamp >= todayStartMs)
+    .forEach((h) => {
+      const task = tasks.find((t) => t.id === h.taskId);
+      if (task) {
+        if (task.status === 'COMPLETED') {
+          dailyCompletedTaskIds.add(h.taskId);
+        }
+      } else {
+        const taskEvents = history.filter((ev) => ev.taskId === h.taskId);
+        const lastEvt = taskEvents.sort((a, b) => a.timestamp - b.timestamp)[taskEvents.length - 1];
+        if (lastEvt?.eventType === 'TASK_COMPLETED') {
+          dailyCompletedTaskIds.add(h.taskId);
+        }
+      }
+    });
+  tasks.forEach((t) => {
+    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= todayStartMs) {
+      dailyCompletedTaskIds.add(t.id);
+    }
+  });
   const pendingDueTodayTasks = tasks.filter(
     (t) => t.status !== 'COMPLETED' && t.dueDate === todayStr
   );
-  const dailyCompleted = completedTodayTasks.length;
+  const dailyCompleted = dailyCompletedTaskIds.size;
   const dailyTotal = dailyCompleted + pendingDueTodayTasks.length;
   const dailyRate =
     dailyTotal > 0 ? Math.round((dailyCompleted / dailyTotal) * 1000) / 10 : dailyCompleted > 0 ? 100 : 0;
 
-  // 2. Weekly Completion Rate (past 7 days window)
+  // 2. Weekly Completion Rate (past 7 days window - unique task IDs)
   const sevenDaysAgoMs = now - 7 * 24 * 60 * 60 * 1000;
-  const weeklyCompletedEvents = history.filter(
-    (h) => h.eventType === 'TASK_COMPLETED' && h.timestamp >= sevenDaysAgoMs
-  );
-  const weeklyCompleted = weeklyCompletedEvents.length;
+  const weeklyCompletedTaskIds = new Set<string>();
+  history
+    .filter((h) => h.eventType === 'TASK_COMPLETED' && h.timestamp >= sevenDaysAgoMs)
+    .forEach((h) => {
+      const task = tasks.find((t) => t.id === h.taskId);
+      if (task) {
+        if (task.status === 'COMPLETED') {
+          weeklyCompletedTaskIds.add(h.taskId);
+        }
+      } else {
+        const taskEvents = history.filter((ev) => ev.taskId === h.taskId);
+        const lastEvt = taskEvents.sort((a, b) => a.timestamp - b.timestamp)[taskEvents.length - 1];
+        if (lastEvt?.eventType === 'TASK_COMPLETED') {
+          weeklyCompletedTaskIds.add(h.taskId);
+        }
+      }
+    });
+  tasks.forEach((t) => {
+    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= sevenDaysAgoMs) {
+      weeklyCompletedTaskIds.add(t.id);
+    }
+  });
+  const weeklyCompleted = weeklyCompletedTaskIds.size;
 
   // Active tasks due within this window or today
   const activeWeeklyTasks = tasks.filter((t) => t.status !== 'COMPLETED');
