@@ -57,9 +57,14 @@ export function reconstructMonthStats(
   const monthStart = new Date(year, month - 1, 1, 0, 0, 0, 0).getTime();
   const monthEnd = new Date(year, month, 0, 23, 59, 59, 999).getTime();
 
-  // Fast category lookup map
-  const categoryMap = new Map<string, string>();
-  categories.forEach((c) => categoryMap.set(c.id, c.name));
+  // Historical category lookup map: combines current categories with past names in history
+  const historicalCategoryMap = new Map<string, string>();
+  categories.forEach((c) => historicalCategoryMap.set(c.id, c.name));
+  history.forEach((h) => {
+    if (h.metadata?.newCategoryId && h.metadata.categoryName) {
+      historicalCategoryMap.set(h.metadata.newCategoryId, h.metadata.categoryName);
+    }
+  });
 
   // Fast task lookup map
   const taskMap = new Map<string, TaskEntity>();
@@ -74,54 +79,26 @@ export function reconstructMonthStats(
   const createdEvents = monthEvents.filter((h) => h.eventType === 'TASK_CREATED');
   const tasksCreatedCount = createdEvents.length;
 
-  // 3. Tasks completed during this month
-  const completedEvents = monthEvents.filter((h) => h.eventType === 'TASK_COMPLETED');
-  const tasksCompletedCount = completedEvents.length;
-
-  // 4. Tasks postponed during this month
+  // 3. Tasks postponed during this month
   const postponedEvents = monthEvents.filter((h) => h.eventType === 'TASK_POSTPONED');
   const postponedTasksCount = postponedEvents.length;
 
-  // 5. Reconstruct accomplishments in this month
-  const accomplishments: MonthlyStats['accomplishments'] = [];
-  const completedTaskIdsSeen = new Set<string>();
-
-  for (const compEvent of completedEvents) {
-    if (completedTaskIdsSeen.has(compEvent.taskId)) continue;
-    completedTaskIdsSeen.add(compEvent.taskId);
-
-    const task = taskMap.get(compEvent.taskId);
-    const categoryName =
-      task && task.categoryId
-        ? categoryMap.get(task.categoryId) || 'Uncategorized'
-        : 'Uncategorized';
-
-    accomplishments.push({
-      id: compEvent.taskId,
-      title: compEvent.taskTitle || (task ? task.title : 'Untitled Task'),
-      completedAt: compEvent.timestamp,
-      notes: task?.notes || '',
-      priority: (task?.priority || compEvent.metadata?.newPriority || 'Present 1') as Priority,
-      categoryName,
-    });
-  }
-
-  // 6. Reconstruct unfinished tasks as of monthEnd:
-  // We collect all task IDs that existed on or before monthEnd
-  const relevantTaskIds = new Set<string>();
+  // 4. Candidate tasks: all tasks that had history on or before monthEnd, or created on/before monthEnd
+  // Ensures tasks deleted after monthEnd are still accounted for
+  const candidateTaskIds = new Set<string>();
   tasks.forEach((t) => {
     if (t.createdDate <= monthEnd) {
-      relevantTaskIds.add(t.id);
+      candidateTaskIds.add(t.id);
     }
   });
-  // Also check history for tasks created before monthEnd (even if later deleted)
   history.forEach((h) => {
     if (h.timestamp <= monthEnd) {
-      relevantTaskIds.add(h.taskId);
+      candidateTaskIds.add(h.taskId);
     }
   });
 
   let unfinishedCount = 0;
+  let tasksCompletedCount = 0;
   const activeTaskPriorityCounts: Record<Priority, number> = {
     'Present 1': 0,
     'Present 5': 0,
@@ -129,50 +106,148 @@ export function reconstructMonthStats(
     'Later 5': 0,
   };
 
-  // Replay historical events for each task up to monthEnd
-  relevantTaskIds.forEach((taskId) => {
+  const categoryBreakdown: MonthlyStats['categoryBreakdown'] = {};
+  categories.forEach((cat) => {
+    categoryBreakdown[cat.id] = { name: cat.name, completed: 0, created: 0 };
+  });
+  categoryBreakdown['uncategorized'] = { name: 'Uncategorized', completed: 0, created: 0 };
+
+  const accomplishments: MonthlyStats['accomplishments'] = [];
+
+  const getEventOrder = (type: string): number => {
+    switch (type) {
+      case 'TASK_CREATED': return 0;
+      case 'DUE_DATE_CHANGED': return 1;
+      case 'PRIORITY_CHANGED': return 2;
+      case 'CATEGORY_CHANGED': return 3;
+      case 'TASK_POSTPONED': return 4;
+      case 'TASK_COMPLETED': return 5;
+      case 'TASK_REOPENED': return 6;
+      case 'TASK_DELETED': return 7;
+      default: return 8;
+    }
+  };
+
+  candidateTaskIds.forEach((taskId) => {
+    const taskRow = taskMap.get(taskId);
     const taskHistoryUpToMonthEnd = history
       .filter((h) => h.taskId === taskId && h.timestamp <= monthEnd)
-      .sort((a, b) => a.timestamp - b.timestamp);
+      .sort((a, b) => a.timestamp - b.timestamp || getEventOrder(a.eventType) - getEventOrder(b.eventType));
 
-    if (taskHistoryUpToMonthEnd.length === 0) return;
+    if (taskHistoryUpToMonthEnd.length === 0 && !taskRow) return;
 
     let reconstructedStatus: 'PENDING' | 'COMPLETED' | 'POSTPONED' | 'DELETED' = 'PENDING';
-    let reconstructedPriority: Priority = 'Present 1';
+    let reconstructedPriority: Priority = taskRow?.priority || 'Present 1';
+    let reconstructedCategoryId: string | null = taskRow?.categoryId || null;
+    let reconstructedCategoryName = reconstructedCategoryId
+      ? historicalCategoryMap.get(reconstructedCategoryId) || 'Uncategorized'
+      : 'Uncategorized';
+    let latestTitle = taskRow?.title || '';
+    let notes = taskRow?.notes || '';
+    let completedInTargetMonth = false;
+    let completedTimestamp = 0;
 
     for (const evt of taskHistoryUpToMonthEnd) {
-      if (evt.eventType === 'TASK_CREATED') {
-        reconstructedStatus = 'PENDING';
-        if (evt.metadata?.newPriority) {
-          reconstructedPriority = evt.metadata.newPriority as Priority;
-        }
-      } else if (evt.eventType === 'TASK_COMPLETED') {
-        reconstructedStatus = 'COMPLETED';
-      } else if (evt.eventType === 'TASK_REOPENED') {
-        reconstructedStatus = 'PENDING';
-      } else if (evt.eventType === 'TASK_POSTPONED') {
-        reconstructedStatus = 'POSTPONED';
-      } else if (evt.eventType === 'TASK_DELETED') {
-        reconstructedStatus = 'DELETED';
-      } else if (evt.eventType === 'PRIORITY_CHANGED' && evt.metadata?.newPriority) {
-        reconstructedPriority = evt.metadata.newPriority as Priority;
+      if (evt.taskTitle) latestTitle = evt.taskTitle;
+      switch (evt.eventType) {
+        case 'TASK_CREATED':
+          reconstructedStatus = 'PENDING';
+          if (evt.metadata?.newPriority) {
+            reconstructedPriority = evt.metadata.newPriority as Priority;
+          }
+          if (evt.metadata?.newCategoryId !== undefined) {
+            reconstructedCategoryId = evt.metadata.newCategoryId;
+            reconstructedCategoryName =
+              evt.metadata.categoryName ||
+              (evt.metadata.newCategoryId
+                ? historicalCategoryMap.get(evt.metadata.newCategoryId) || 'Uncategorized'
+                : 'Uncategorized');
+          }
+          break;
+        case 'TASK_COMPLETED':
+          reconstructedStatus = 'COMPLETED';
+          if (evt.timestamp >= monthStart && evt.timestamp <= monthEnd) {
+            completedInTargetMonth = true;
+            completedTimestamp = evt.timestamp;
+          }
+          break;
+        case 'TASK_REOPENED':
+          reconstructedStatus = 'PENDING';
+          if (evt.timestamp >= monthStart && evt.timestamp <= monthEnd) {
+            completedInTargetMonth = false;
+          }
+          break;
+        case 'TASK_POSTPONED':
+          reconstructedStatus = 'POSTPONED';
+          break;
+        case 'TASK_DELETED':
+          reconstructedStatus = 'DELETED';
+          completedInTargetMonth = false;
+          break;
+        case 'PRIORITY_CHANGED':
+          if (evt.metadata?.newPriority) {
+            reconstructedPriority = evt.metadata.newPriority as Priority;
+          }
+          break;
+        case 'CATEGORY_CHANGED':
+          if (evt.metadata?.newCategoryId !== undefined) {
+            reconstructedCategoryId = evt.metadata.newCategoryId;
+            reconstructedCategoryName =
+              evt.metadata.categoryName ||
+              (evt.metadata.newCategoryId
+                ? historicalCategoryMap.get(evt.metadata.newCategoryId) || 'Uncategorized'
+                : 'Uncategorized');
+          }
+          break;
       }
     }
 
-    // If as of monthEnd it was pending or postponed, it counts as unfinished for that month
-    if (reconstructedStatus === 'PENDING' || reconstructedStatus === 'POSTPONED') {
+    if (reconstructedStatus === 'DELETED') {
+      return;
+    }
+
+    if (completedInTargetMonth && reconstructedStatus === 'COMPLETED') {
+      tasksCompletedCount++;
+      const catKey = reconstructedCategoryId || 'uncategorized';
+      if (!categoryBreakdown[catKey]) {
+        categoryBreakdown[catKey] = { name: reconstructedCategoryName, completed: 0, created: 0 };
+      }
+      categoryBreakdown[catKey].completed++;
+
+      accomplishments.push({
+        id: taskId,
+        title: latestTitle || 'Untitled Task',
+        completedAt: completedTimestamp,
+        notes,
+        priority: reconstructedPriority,
+        categoryName: reconstructedCategoryName,
+      });
+    } else if (reconstructedStatus === 'PENDING' || reconstructedStatus === 'POSTPONED') {
       unfinishedCount++;
       activeTaskPriorityCounts[reconstructedPriority]++;
     }
   });
 
-  // 7. Calculate completion rate:
-  // Completed in month / (Completed in month + Unfinished as of month end)
+  // Track created tasks in category breakdown
+  createdEvents.forEach((evt) => {
+    let catId = evt.metadata?.newCategoryId || 'uncategorized';
+    let catName = evt.metadata?.categoryName || historicalCategoryMap.get(catId) || 'Uncategorized';
+    if (!categoryBreakdown[catId]) {
+      categoryBreakdown[catId] = {
+        name: catName,
+        completed: 0,
+        created: 0,
+      };
+    }
+    categoryBreakdown[catId].created++;
+  });
+
+  // Calculate completion rate
   const totalVolume = tasksCompletedCount + unfinishedCount;
   const completionRate =
     totalVolume > 0 ? Math.round((tasksCompletedCount / totalVolume) * 1000) / 10 : 0;
 
-  // 8. Priority breakdown
+  // Priority breakdown
   const priorityBreakdown: MonthlyStats['priorityBreakdown'] = {
     'Present 1': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 1'] },
     'Present 5': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 5'] },
@@ -181,8 +256,7 @@ export function reconstructMonthStats(
   };
 
   createdEvents.forEach((evt) => {
-    const task = taskMap.get(evt.taskId);
-    const p = (task?.priority || evt.metadata?.newPriority || 'Present 1') as Priority;
+    const p = (evt.metadata?.newPriority || 'Present 1') as Priority;
     if (priorityBreakdown[p]) {
       priorityBreakdown[p].created++;
     }
@@ -192,35 +266,6 @@ export function reconstructMonthStats(
     if (priorityBreakdown[acc.priority]) {
       priorityBreakdown[acc.priority].completed++;
     }
-  });
-
-  // 9. Category breakdown
-  const categoryBreakdown: MonthlyStats['categoryBreakdown'] = {};
-  categories.forEach((cat) => {
-    categoryBreakdown[cat.id] = { name: cat.name, completed: 0, created: 0 };
-  });
-  categoryBreakdown['uncategorized'] = { name: 'Uncategorized', completed: 0, created: 0 };
-
-  createdEvents.forEach((evt) => {
-    const task = taskMap.get(evt.taskId);
-    const catId = task?.categoryId || 'uncategorized';
-    if (!categoryBreakdown[catId]) {
-      categoryBreakdown[catId] = {
-        name: categoryMap.get(catId) || 'Uncategorized',
-        completed: 0,
-        created: 0,
-      };
-    }
-    categoryBreakdown[catId].created++;
-  });
-
-  accomplishments.forEach((acc) => {
-    const task = taskMap.get(acc.id);
-    const catId = task?.categoryId || 'uncategorized';
-    if (!categoryBreakdown[catId]) {
-      categoryBreakdown[catId] = { name: acc.categoryName, completed: 0, created: 0 };
-    }
-    categoryBreakdown[catId].completed++;
   });
 
   return {
@@ -410,11 +455,11 @@ export function calculateFourTiles(
       total: monthlyTotal,
     },
     unfinished: {
-      total: unfinishedTasks.length,
-      present1: p1,
-      present5: p5,
-      later1: l1,
-      later5: l5,
+      total: monthStats.unfinishedTasks,
+      present1: monthStats.priorityBreakdown['Present 1'].active,
+      present5: monthStats.priorityBreakdown['Present 5'].active,
+      later1: monthStats.priorityBreakdown['Later 1'].active,
+      later5: monthStats.priorityBreakdown['Later 5'].active,
     },
   };
 }

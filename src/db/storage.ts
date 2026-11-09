@@ -423,6 +423,10 @@ export class MomentumRepository {
     tasks.unshift(newTask);
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
 
+    const categoryObj = newTask.categoryId
+      ? this.getCategories().find((c) => c.id === newTask.categoryId)
+      : null;
+
     // Record History Event
     this.recordHistoryEvent({
       taskId: newTask.id,
@@ -435,6 +439,7 @@ export class MomentumRepository {
         newPriority: newTask.priority,
         newDueDate: newTask.dueDate,
         newCategoryId: newTask.categoryId,
+        categoryName: categoryObj?.name || (newTask.categoryId ? undefined : 'Uncategorized'),
       },
     });
 
@@ -493,6 +498,9 @@ export class MomentumRepository {
     }
 
     if (updates.categoryId !== undefined && updates.categoryId !== prev.categoryId) {
+      const newCatObj = updates.categoryId
+        ? this.getCategories().find((c) => c.id === updates.categoryId)
+        : null;
       this.recordHistoryEvent({
         taskId,
         taskTitle: updated.title,
@@ -502,6 +510,7 @@ export class MomentumRepository {
         metadata: {
           previousCategoryId: prev.categoryId,
           newCategoryId: updates.categoryId,
+          categoryName: newCatObj?.name || (updates.categoryId ? undefined : 'Uncategorized'),
         },
       });
     }

@@ -56,6 +56,7 @@ export interface TaskHistoryEntity {
     newPriority?: Priority;
     previousCategoryId?: string | null;
     newCategoryId?: string | null;
+    categoryName?: string | null;
     postponedUntil?: string;
   };
 }

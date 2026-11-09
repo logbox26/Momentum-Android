@@ -39,7 +39,7 @@ abstract class MomentumDatabase : RoomDatabase() {
                     context.applicationContext,
                     MomentumDatabase::class.java,
                     "momentum_database"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

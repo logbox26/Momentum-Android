@@ -54,8 +54,8 @@ fun ReportsScreen(
     var selectedSubTab by remember { mutableStateOf("QUICK") } // QUICK, DETAILED, COMPARISON, LOG
 
     // 4 KPI Tiles
-    val fourTiles = remember(tasks, history) {
-        reportGen.calculateFourTiles(tasks, history)
+    val fourTiles = remember(tasks, history, categories) {
+        reportGen.calculateFourTiles(tasks, history, categories)
     }
 
     // Historical Monthly Reconstructed Result

@@ -51,7 +51,10 @@ data class TaskHistoryEntity(
     val newDueDate: String? = null,
     val previousPriority: String? = null,
     val newPriority: String? = null,
-    val postponedUntil: String? = null
+    val postponedUntil: String? = null,
+    val previousCategoryId: String? = null,
+    val newCategoryId: String? = null,
+    val categoryName: String? = null
 )
 
 /**

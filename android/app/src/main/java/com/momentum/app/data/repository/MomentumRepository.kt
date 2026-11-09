@@ -1,5 +1,6 @@
 package com.momentum.app.data.repository
 
+import androidx.room.withTransaction
 import com.momentum.app.data.local.MomentumDatabase
 import com.momentum.app.data.local.entity.*
 import com.momentum.app.domain.model.HistoryEventType
@@ -21,14 +22,14 @@ class MomentumRepository(private val db: MomentumDatabase) {
     val allHistory: Flow<List<TaskHistoryEntity>> = historyDao.getAllHistory()
     val allCategories: Flow<List<CategoryEntity>> = categoryDao.getAllCategories()
 
-    // Task Operations with History Logging
+    // Task Operations with History Logging (Atomic Room Transactions)
     suspend fun createTask(
         title: String,
         notes: String,
         dueDate: String,
         priority: Priority,
         categoryId: String?
-    ): TaskEntity {
+    ): TaskEntity = db.withTransaction {
         val now = System.currentTimeMillis()
         val task = TaskEntity(
             id = UUID.randomUUID().toString(),
@@ -43,6 +44,8 @@ class MomentumRepository(private val db: MomentumDatabase) {
         )
         taskDao.insertTask(task)
 
+        val catName = categoryId?.let { categoryDao.getCategoryById(it)?.name }
+
         historyDao.insertHistory(
             TaskHistoryEntity(
                 id = UUID.randomUUID().toString(),
@@ -53,10 +56,12 @@ class MomentumRepository(private val db: MomentumDatabase) {
                 details = "Task created with priority ${priority.label} and due date $dueDate",
                 newStatus = TaskStatus.PENDING.name,
                 newDueDate = dueDate,
-                newPriority = priority.label
+                newPriority = priority.label,
+                newCategoryId = categoryId,
+                categoryName = catName
             )
         )
-        return task
+        task
     }
 
     suspend fun updateTask(
@@ -66,9 +71,8 @@ class MomentumRepository(private val db: MomentumDatabase) {
         newDueDate: String,
         newPriority: Priority,
         newCategoryId: String?
-    ) {
+    ) = db.withTransaction {
         val now = System.currentTimeMillis()
-        val titleChanged = task.title != newTitle.trim()
         val dueDateChanged = task.dueDate != newDueDate
         val priorityChanged = task.priority != newPriority
         val categoryChanged = task.categoryId != newCategoryId
@@ -112,6 +116,7 @@ class MomentumRepository(private val db: MomentumDatabase) {
             )
         }
         if (categoryChanged) {
+            val newCatName = newCategoryId?.let { categoryDao.getCategoryById(it)?.name }
             historyDao.insertHistory(
                 TaskHistoryEntity(
                     id = UUID.randomUUID().toString(),
@@ -119,13 +124,16 @@ class MomentumRepository(private val db: MomentumDatabase) {
                     taskTitle = updated.title,
                     eventType = HistoryEventType.CATEGORY_CHANGED,
                     timestamp = now,
-                    details = "Category assignment updated"
+                    details = "Category assignment updated",
+                    previousCategoryId = task.categoryId,
+                    newCategoryId = newCategoryId,
+                    categoryName = newCatName
                 )
             )
         }
     }
 
-    suspend fun completeTask(task: TaskEntity) {
+    suspend fun completeTask(task: TaskEntity) = db.withTransaction {
         val now = System.currentTimeMillis()
         val updated = task.copy(
             status = TaskStatus.COMPLETED,
@@ -148,7 +156,7 @@ class MomentumRepository(private val db: MomentumDatabase) {
         )
     }
 
-    suspend fun reopenTask(task: TaskEntity) {
+    suspend fun reopenTask(task: TaskEntity) = db.withTransaction {
         val now = System.currentTimeMillis()
         val updated = task.copy(
             status = TaskStatus.PENDING,
@@ -171,7 +179,7 @@ class MomentumRepository(private val db: MomentumDatabase) {
         )
     }
 
-    suspend fun postponeTask(task: TaskEntity, postponeUntilDate: String) {
+    suspend fun postponeTask(task: TaskEntity, postponeUntilDate: String) = db.withTransaction {
         val now = System.currentTimeMillis()
         val updated = task.copy(
             dueDate = postponeUntilDate,
@@ -197,7 +205,7 @@ class MomentumRepository(private val db: MomentumDatabase) {
         )
     }
 
-    suspend fun deleteTask(task: TaskEntity) {
+    suspend fun deleteTask(task: TaskEntity) = db.withTransaction {
         val now = System.currentTimeMillis()
         taskDao.deleteTask(task.id)
 
@@ -230,7 +238,7 @@ class MomentumRepository(private val db: MomentumDatabase) {
         categoryDao.renameCategory(id, newName.trim())
     }
 
-    suspend fun deleteCategorySafely(id: String) {
+    suspend fun deleteCategorySafely(id: String) = db.withTransaction {
         // Safe deletion guarantee: nullify categoryId on all associated tasks first
         taskDao.nullifyCategoryForTasks(id)
         // Then delete the category entity
