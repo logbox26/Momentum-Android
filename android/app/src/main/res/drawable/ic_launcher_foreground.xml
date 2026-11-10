@@ -6,71 +6,69 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Endpoint Outer Soft Glow Rings (Halo) -->
+    <!-- Endpoint Outer Green Glow Halo Rings (Safely inside 33dp radius) -->
     <path
-        android:fillColor="#15FF5500"
-        android:pathData="M 74,33 m -16,0 a 16,16 0 1,0 32,0 a 16,16 0 1,0 -32,0" />
+        android:fillColor="#1500E676"
+        android:pathData="M 76,38.6 m -10,0 a 10,10 0 1,0 20,0 a 10,10 0 1,0 -20,0" />
     <path
-        android:fillColor="#35FF8800"
-        android:pathData="M 74,33 m -11,0 a 11,11 0 1,0 22,0 a 11,11 0 1,0 -22,0" />
+        android:fillColor="#3500E676"
+        android:pathData="M 76,38.6 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
     <path
-        android:fillColor="#65FFAA00"
-        android:pathData="M 74,33 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+        android:fillColor="#7000FF66"
+        android:pathData="M 76,38.6 m -4.5,0 a 4.5,4.5 0 1,0 9,0 a 4.5,4.5 0 1,0 -9,0" />
 
-    <!-- Ambient Wave Glow Underneath -->
+    <!-- Subtle Ambient Green/Teal/Cyan Glow around the Line -->
     <path
-        android:pathData="M 25,73 C 28,66 32,59 37,59 C 42,59 44,67 49,67 C 54,67 58,48 63,48 C 66,48 68,53 70,51 C 73,47 75,39 74,33"
-        android:strokeWidth="12"
-        android:strokeAlpha="0.28"
+        android:pathData="M 31,67.4 L 45,54.4 Q 48.4,51.3 51.5,54.0 L 56.5,58.3 Q 59.4,60.8 62.2,57.1 L 76,38.6"
+        android:strokeWidth="9.5"
+        android:strokeAlpha="0.25"
         android:strokeLineCap="round"
         android:strokeLineJoin="round">
         <aapt:attr name="android:strokeColor">
             <gradient
-                android:startX="25"
-                android:startY="73"
-                android:endX="74"
-                android:endY="33"
+                android:startX="31"
+                android:startY="67.4"
+                android:endX="76"
+                android:endY="38.6"
                 android:type="linear">
-                <item android:offset="0.00" android:color="#00A6FF" />
-                <item android:offset="0.22" android:color="#0077FF" />
-                <item android:offset="0.38" android:color="#8B2FC9" />
-                <item android:offset="0.52" android:color="#E11D48" />
-                <item android:offset="0.68" android:color="#F97316" />
-                <item android:offset="0.84" android:color="#FBBF24" />
-                <item android:offset="1.00" android:color="#FEF08A" />
+                <item android:offset="0.00" android:color="#00E5FF" />
+                <item android:offset="0.25" android:color="#00B0FF" />
+                <item android:offset="0.50" android:color="#00BFA5" />
+                <item android:offset="0.75" android:color="#00E676" />
+                <item android:offset="1.00" android:color="#69F0AE" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Main Wave Line: 3 Upward Movements, Thick Rounded Start and Head -->
+    <!-- Continuous 3-Segment Stock Market Line -->
     <path
-        android:pathData="M 25,73 C 28,66 32,59 37,59 C 42,59 44,67 49,67 C 54,67 58,48 63,48 C 66,48 68,53 70,51 C 73,47 75,39 74,33"
-        android:strokeWidth="7"
+        android:pathData="M 31,67.4 L 45,54.4 Q 48.4,51.3 51.5,54.0 L 56.5,58.3 Q 59.4,60.8 62.2,57.1 L 76,38.6"
+        android:strokeWidth="5.0"
         android:strokeLineCap="round"
         android:strokeLineJoin="round">
         <aapt:attr name="android:strokeColor">
             <gradient
-                android:startX="25"
-                android:startY="73"
-                android:endX="74"
-                android:endY="33"
+                android:startX="31"
+                android:startY="67.4"
+                android:endX="76"
+                android:endY="38.6"
                 android:type="linear">
-                <item android:offset="0.00" android:color="#00A6FF" />
-                <item android:offset="0.22" android:color="#0077FF" />
-                <item android:offset="0.38" android:color="#8B2FC9" />
-                <item android:offset="0.52" android:color="#E11D48" />
-                <item android:offset="0.68" android:color="#F97316" />
-                <item android:offset="0.84" android:color="#FBBF24" />
-                <item android:offset="1.00" android:color="#FEF08A" />
+                <item android:offset="0.00" android:color="#00F5FF" />
+                <item android:offset="0.20" android:color="#00D4FF" />
+                <item android:offset="0.38" android:color="#0091EA" />
+                <item android:offset="0.54" android:color="#00BFA5" />
+                <item android:offset="0.72" android:color="#00E676" />
+                <item android:offset="0.88" android:color="#69F0AE" />
+                <item android:offset="1.00" android:color="#EDFCEB" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Glowing Endpoint Circular Node Core -->
+    <!-- Bright White-Green Glowing Circular Endpoint Node -->
     <path
-        android:fillColor="#FFD54F"
-        android:pathData="M 74,33 m -4.5,0 a 4.5,4.5 0 1,0 9,0 a 4.5,4.5 0 1,0 -9,0" />
+        android:fillColor="#CCB9F6CA"
+        android:pathData="M 76,38.6 m -3.4,0 a 3.4,3.4 0 1,0 6.8,0 a 3.4,3.4 0 1,0 -6.8,0" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M 74,33 m -2.8,0 a 2.8,2.8 0 1,0 5.6,0 a 2.8,2.8 0 1,0 -5.6,0" />
+        android:pathData="M 76,38.6 m -2.4,0 a 2.4,2.4 0 1,0 4.8,0 a 2.4,2.4 0 1,0 -4.8,0" />
 </vector>
