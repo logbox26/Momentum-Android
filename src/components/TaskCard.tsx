@@ -42,13 +42,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const getPriorityStyle = (priority: Priority) => {
     switch (priority) {
       case 'Present 1':
-        return 'text-rose-700 dark:text-rose-400 font-semibold';
+        return 'text-rose-700 dark:text-rose-400 font-semibold whitespace-nowrap';
       case 'Present 5':
-        return 'text-amber-700 dark:text-amber-400 font-medium';
+        return 'text-amber-700 dark:text-amber-400 font-medium whitespace-nowrap';
       case 'Later 1':
-        return 'text-sky-700 dark:text-sky-400 font-medium';
+        return 'text-sky-700 dark:text-sky-400 font-medium whitespace-nowrap';
       case 'Later 5':
-        return 'text-[var(--text-muted)] font-normal';
+        return 'text-[var(--text-muted)] font-normal whitespace-nowrap';
     }
   };
 

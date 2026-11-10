@@ -155,8 +155,11 @@ fun TaskItemCard(
                         text = task.title,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isCompleted) colors.textMuted else colors.textPrimary
+                        color = if (isCompleted) colors.textMuted else colors.textPrimary,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     // Priority Badge (Exactly 1 of 4)
                     Box(
@@ -176,6 +179,8 @@ fun TaskItemCard(
                             text = task.priority.label,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false,
                             color = when (task.priority) {
                                 Priority.PRESENT_1 -> Color(0xFFDC2626)
                                 Priority.PRESENT_5 -> Color(0xFFEA580C)

@@ -131,7 +131,14 @@ fun HomeScreen(
                             FilterChip(
                                 selected = selectedPriorityFilter == p,
                                 onClick = { selectedPriorityFilter = if (selectedPriorityFilter == p) null else p },
-                                label = { Text(p.label, fontSize = 11.sp) }
+                                label = {
+                                    Text(
+                                        text = p.label,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             )
                         }
                     }
@@ -285,15 +292,22 @@ fun HomeScreen(
                     )
 
                     Text("Priority (Strictly 4 Tiers):", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Row(
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Priority.entries.forEach { p ->
+                        items(Priority.entries) { p ->
                             FilterChip(
                                 selected = priority == p,
                                 onClick = { priority = p },
-                                label = { Text(p.label, fontSize = 10.sp) }
+                                label = {
+                                    Text(
+                                        text = p.label,
+                                        fontSize = 10.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             )
                         }
                     }
