@@ -240,6 +240,16 @@ dependencies {
   );
 
   zip.file(
+    'app/src/main/res/xml/file_paths.xml',
+    `<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="exports_cache" path="exports/" />
+    <files-path name="exports_files" path="exports/" />
+</paths>
+`
+  );
+
+  zip.file(
     'app/src/main/AndroidManifest.xml',
     `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -266,6 +276,16 @@ dependencies {
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.momentum.app.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>
 `
@@ -480,11 +500,17 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: TaskEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTasks(tasks: List<TaskEntity>)
+
     @Update
     suspend fun updateTask(task: TaskEntity)
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTask(taskId: String)
+
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAllTasks()
 
     @Query("UPDATE tasks SET categoryId = null WHERE categoryId = :categoryId")
     suspend fun nullifyCategoryForTasks(categoryId: String): Int
@@ -500,6 +526,12 @@ interface TaskHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistory(entry: TaskHistoryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHistories(entries: List<TaskHistoryEntity>)
+
+    @Query("DELETE FROM task_history")
+    suspend fun deleteAllHistory()
 }
 
 @Dao
@@ -510,8 +542,14 @@ interface CategoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: CategoryEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategories(categories: List<CategoryEntity>)
+
     @Query("DELETE FROM categories WHERE id = :id")
     suspend fun deleteCategory(id: String)
+
+    @Query("DELETE FROM categories")
+    suspend fun deleteAllCategories()
 }
 
 @Dao
@@ -519,8 +557,17 @@ interface SettingDao {
     @Query("SELECT value FROM settings WHERE \`key\` = :key")
     suspend fun getSetting(key: String): String?
 
+    @Query("SELECT * FROM settings")
+    suspend fun getAllSettings(): List<SettingEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setSetting(setting: SettingEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSettings(settings: List<SettingEntity>)
+
+    @Query("DELETE FROM settings")
+    suspend fun deleteAllSettings()
 }
 
 @Dao

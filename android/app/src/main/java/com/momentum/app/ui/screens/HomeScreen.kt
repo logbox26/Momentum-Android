@@ -1,6 +1,8 @@
 package com.momentum.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -240,11 +242,11 @@ fun HomeScreen(
     // Create / Edit Dialog
     if (showCreateDialog || editingTask != null) {
         val isEditing = editingTask != null
-        var title by remember { mutableStateOf(editingTask?.title ?: "") }
-        var notes by remember { mutableStateOf(editingTask?.notes ?: "") }
-        var dueDate by remember { mutableStateOf(editingTask?.dueDate ?: todayStr) }
-        var priority by remember { mutableStateOf(editingTask?.priority ?: Priority.PRESENT_1) }
-        var categoryId by remember { mutableStateOf(editingTask?.categoryId) }
+        var title by remember(editingTask, showCreateDialog) { mutableStateOf(editingTask?.title ?: "") }
+        var notes by remember(editingTask, showCreateDialog) { mutableStateOf(editingTask?.notes ?: "") }
+        var dueDate by remember(editingTask, showCreateDialog) { mutableStateOf(editingTask?.dueDate ?: todayStr) }
+        var priority by remember(editingTask, showCreateDialog) { mutableStateOf(editingTask?.priority ?: Priority.PRESENT_1) }
+        var categoryId by remember(editingTask, showCreateDialog) { mutableStateOf(editingTask?.categoryId) }
 
         AlertDialog(
             onDismissRequest = {
@@ -259,7 +261,10 @@ fun HomeScreen(
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
@@ -289,6 +294,27 @@ fun HomeScreen(
                                 selected = priority == p,
                                 onClick = { priority = p },
                                 label = { Text(p.label, fontSize = 10.sp) }
+                            )
+                        }
+                    }
+
+                    Text("Category:", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        item {
+                            FilterChip(
+                                selected = categoryId == null,
+                                onClick = { categoryId = null },
+                                label = { Text("No Category", fontSize = 10.sp) }
+                            )
+                        }
+                        items(categories) { cat ->
+                            FilterChip(
+                                selected = categoryId == cat.id,
+                                onClick = { categoryId = cat.id },
+                                label = { Text(cat.name, fontSize = 10.sp) }
                             )
                         }
                     }
