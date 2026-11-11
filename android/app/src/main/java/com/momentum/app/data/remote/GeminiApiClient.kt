@@ -67,9 +67,10 @@ class GeminiApiClient(
                 put("monthlyTotal", fourTiles.monthlyTotalCount)
                 put("unfinishedCount", fourTiles.unfinishedCount)
                 put("unfinishedPresent1", fourTiles.unfinishedByPriority.present1)
-                put("unfinishedPresent5", fourTiles.unfinishedByPriority.present5)
-                put("unfinishedLater1", fourTiles.unfinishedByPriority.later1)
-                put("unfinishedLater5", fourTiles.unfinishedByPriority.later5)
+                put("unfinishedPresent2", fourTiles.unfinishedByPriority.present2)
+                put("unfinishedPresent15", fourTiles.unfinishedByPriority.present15)
+                put("unfinishedFuture1", fourTiles.unfinishedByPriority.future1)
+                put("unfinishedFuture2", fourTiles.unfinishedByPriority.future2)
                 monthStats?.let {
                     put("reconstructedMonthCompletionRate", it.completionRate)
                     put("reconstructedMonthCreated", it.tasksCreated)
