@@ -3,7 +3,7 @@
 Offline-first personal productivity and momentum tracker built with Kotlin, Jetpack Compose, and Room.
 
 ## Features
-- **Strict 4 Priorities**: Present 1, Present 5, Later 1, Later 5.
+- **Strict 6 Priorities**: Present 1, Present 2, Present 15, Future 1, Future 2, Trashable.
 - **5 Selectable Themes**: Calm Blue, Sage Green, Warm Focus, Modern Slate, Deep Focus.
 - **Offline-First Room Database**: Safe category deletion, full task lifecycle audit trail.
 - **Historical Monthly Reconstruction**: Reports reconstruct past state from immutable event logs, not current status.

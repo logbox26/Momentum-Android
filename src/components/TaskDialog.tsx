@@ -74,19 +74,6 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
     }
   };
 
-  const getPriorityDescription = (p: Priority) => {
-    switch (p) {
-      case 'Present 1':
-        return 'Top Focus · Urgent';
-      case 'Present 5':
-        return 'Current Sprint · Normal';
-      case 'Later 1':
-        return 'Deferred · High Value';
-      case 'Later 5':
-        return 'Backlog · Someday';
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
       <div
@@ -200,13 +187,13 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
             </div>
           </div>
 
-          {/* Priority Selection: EXACTLY the 4 required options */}
+          {/* Priority Selection: EXACTLY the 6 new priorities */}
           <div>
             <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5 flex items-center gap-1">
               <Flag className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>Priority Level</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {PRIORITY_OPTIONS.map((p) => {
                 const isSelected = priority === p;
                 return (
@@ -214,17 +201,14 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
                     type="button"
                     key={p}
                     onClick={() => setPriority(p)}
-                    className={`flex flex-col text-left p-2.5 rounded-xl border transition-all min-h-[52px] ${
+                    className={`flex items-center justify-center text-center px-3 py-2.5 rounded-xl border transition-all min-h-[44px] ${
                       isSelected
-                        ? 'border-[var(--accent-primary)] bg-[var(--bg-highlight)] text-[var(--text-primary)] ring-1 ring-[var(--accent-primary)]'
-                        : 'border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]'
+                        ? 'border-[var(--accent-primary)] bg-[var(--bg-highlight)] text-[var(--text-primary)] ring-1 ring-[var(--accent-primary)] font-bold'
+                        : 'border-[var(--border-subtle)] bg-[var(--bg-surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] font-medium'
                     }`}
                   >
-                    <span className="text-xs font-bold leading-tight">
+                    <span className="text-xs whitespace-nowrap">
                       {p}
-                    </span>
-                    <span className="text-[10px] text-[var(--text-muted)] mt-0.5">
-                      {getPriorityDescription(p)}
                     </span>
                   </button>
                 );

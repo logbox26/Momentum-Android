@@ -291,7 +291,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Text("Priority (Strictly 4 Tiers):", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("Priority:", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)

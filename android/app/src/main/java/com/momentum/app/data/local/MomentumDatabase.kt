@@ -5,7 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.momentum.app.data.local.dao.*
-import com.momentum.app.data.local.entity.*
+import androidx.room.TypeConverters
+import com.momentum.app.data.local.converter.Converters
 
 /**
  * Room Database for Momentum
@@ -22,6 +23,7 @@ import com.momentum.app.data.local.entity.*
     version = 1,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class MomentumDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun taskHistoryDao(): TaskHistoryDao

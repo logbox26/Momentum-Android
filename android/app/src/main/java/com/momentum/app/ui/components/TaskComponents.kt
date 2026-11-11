@@ -168,9 +168,11 @@ fun TaskItemCard(
                             .background(
                                 when (task.priority) {
                                     Priority.PRESENT_1 -> Color(0xFFDC2626).copy(alpha = 0.15f)
-                                    Priority.PRESENT_5 -> Color(0xFFF97316).copy(alpha = 0.15f)
-                                    Priority.LATER_1 -> Color(0xFF2563EB).copy(alpha = 0.15f)
-                                    Priority.LATER_5 -> Color(0xFF64748B).copy(alpha = 0.15f)
+                                    Priority.PRESENT_2 -> Color(0xFFF97316).copy(alpha = 0.15f)
+                                    Priority.PRESENT_15 -> Color(0xFFF59E0B).copy(alpha = 0.15f)
+                                    Priority.FUTURE_1 -> Color(0xFF2563EB).copy(alpha = 0.15f)
+                                    Priority.FUTURE_2 -> Color(0xFF64748B).copy(alpha = 0.15f)
+                                    Priority.TRASHABLE -> Color(0xFF94A3B8).copy(alpha = 0.15f)
                                 }
                             )
                             .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -183,9 +185,11 @@ fun TaskItemCard(
                             softWrap = false,
                             color = when (task.priority) {
                                 Priority.PRESENT_1 -> Color(0xFFDC2626)
-                                Priority.PRESENT_5 -> Color(0xFFEA580C)
-                                Priority.LATER_1 -> Color(0xFF2563EB)
-                                Priority.LATER_5 -> Color(0xFF64748B)
+                                Priority.PRESENT_2 -> Color(0xFFEA580C)
+                                Priority.PRESENT_15 -> Color(0xFFD97706)
+                                Priority.FUTURE_1 -> Color(0xFF2563EB)
+                                Priority.FUTURE_2 -> Color(0xFF64748B)
+                                Priority.TRASHABLE -> Color(0xFF94A3B8)
                             }
                         )
                     }
@@ -333,13 +337,19 @@ fun FourTilesSection(tiles: FourTilesResult) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "P1: ${tiles.unfinishedByPriority.present1}  |  P5: ${tiles.unfinishedByPriority.present5}",
+                        text = "Present 1: ${tiles.unfinishedByPriority.present1}  |  Present 2: ${tiles.unfinishedByPriority.present2}",
                         fontSize = 10.sp,
                         color = Color(0xFFDC2626),
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "L1: ${tiles.unfinishedByPriority.later1}  |  L5: ${tiles.unfinishedByPriority.later5}",
+                        text = "Present 15: ${tiles.unfinishedByPriority.present15}",
+                        fontSize = 10.sp,
+                        color = Color(0xFFD97706),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Future 1: ${tiles.unfinishedByPriority.future1}  |  Future 2: ${tiles.unfinishedByPriority.future2}",
                         fontSize = 10.sp,
                         color = Color(0xFF2563EB),
                         fontWeight = FontWeight.SemiBold

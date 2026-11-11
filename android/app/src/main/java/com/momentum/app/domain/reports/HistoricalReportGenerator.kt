@@ -22,7 +22,7 @@ class HistoricalReportGenerator {
      * 1. Daily completion rate
      * 2. Weekly completion rate
      * 3. Monthly completion rate
-     * 4. Unfinished tasks breakdown by Present 1, Present 5, Later 1, and Later 5
+     * 4. Unfinished tasks breakdown by Present 1, Present 2, Present 15, Future 1, and Future 2
      */
     fun calculateFourTiles(
         tasks: List<TaskEntity>,
@@ -155,9 +155,10 @@ class HistoricalReportGenerator {
 
         var unfinishedAtMonthEnd = 0
         var p1 = 0
-        var p5 = 0
-        var l1 = 0
-        var l5 = 0
+        var p2 = 0
+        var p15 = 0
+        var f1 = 0
+        var f2 = 0
         val categoryCountMap = mutableMapOf<String, Int>()
 
         val accomplishmentsList = mutableListOf<String>()
@@ -246,20 +247,42 @@ class HistoricalReportGenerator {
                 }
             } else if (reconstructedStatus == "PENDING" || reconstructedStatus == "POSTPONED") {
                 // If pending or postponed as of monthEndMs, this task was UNFINISHED for the target month
-                unfinishedAtMonthEnd++
                 when (reconstructedPriority) {
-                    Priority.PRESENT_1 -> p1++
-                    Priority.PRESENT_5 -> p5++
-                    Priority.LATER_1 -> l1++
-                    Priority.LATER_5 -> l5++
+                    Priority.PRESENT_1 -> {
+                        p1++
+                        unfinishedAtMonthEnd++
+                    }
+                    Priority.PRESENT_2 -> {
+                        p2++
+                        unfinishedAtMonthEnd++
+                    }
+                    Priority.PRESENT_15 -> {
+                        p15++
+                        unfinishedAtMonthEnd++
+                    }
+                    Priority.FUTURE_1 -> {
+                        f1++
+                        unfinishedAtMonthEnd++
+                    }
+                    Priority.FUTURE_2 -> {
+                        f2++
+                        unfinishedAtMonthEnd++
+                    }
+                    Priority.TRASHABLE -> {
+                        // "Do not count Trashable as unfinished"
+                    }
                 }
-                val catName = if (reconstructedCategoryName.isNotBlank()) reconstructedCategoryName else "Uncategorized"
-                categoryCountMap[catName] = (categoryCountMap[catName] ?: 0) + 1
+                if (reconstructedPriority != Priority.TRASHABLE) {
+                    val catName = if (reconstructedCategoryName.isNotBlank()) reconstructedCategoryName else "Uncategorized"
+                    categoryCountMap[catName] = (categoryCountMap[catName] ?: 0) + 1
+                }
             }
         }
 
-        val totalVolume = completedCountInMonth + unfinishedAtMonthEnd
-        val completionRate = if (totalVolume > 0) (completedCountInMonth.toFloat() / totalVolume.toFloat()) * 100f else 0f
+        // Future tasks should not be treated as failed simply because they were not completed
+        val activePresentTasks = p1 + p2 + p15
+        val actionableVolume = completedCountInMonth + activePresentTasks
+        val completionRate = if (actionableVolume > 0) (completedCountInMonth.toFloat() / actionableVolume.toFloat()) * 100f else 0f
 
         return MonthlyReportResult(
             year = year,
@@ -270,7 +293,13 @@ class HistoricalReportGenerator {
             postponedTasks = postponedEvents.size,
             completionRate = completionRate,
             accomplishments = accomplishmentsList,
-            priorityBreakdown = PriorityBreakdown(p1, p5, l1, l5),
+            priorityBreakdown = PriorityBreakdown(
+                present1 = p1,
+                present2 = p2,
+                present15 = p15,
+                future1 = f1,
+                future2 = f2
+            ),
             categoryBreakdown = categoryCountMap
         )
     }

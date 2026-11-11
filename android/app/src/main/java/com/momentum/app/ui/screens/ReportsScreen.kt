@@ -338,10 +338,11 @@ fun ReportsScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Priority Breakdown (At Month End)", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                            Text("Present 1 (Top Focus): ${monthReport.priorityBreakdown.present1}", fontSize = 12.sp)
-                            Text("Present 5 (Current Sprint): ${monthReport.priorityBreakdown.present5}", fontSize = 12.sp)
-                            Text("Later 1 (Strategic): ${monthReport.priorityBreakdown.later1}", fontSize = 12.sp)
-                            Text("Later 5 (Backlog): ${monthReport.priorityBreakdown.later5}", fontSize = 12.sp)
+                            Text("Present 1: ${monthReport.priorityBreakdown.present1}", fontSize = 12.sp)
+                            Text("Present 2: ${monthReport.priorityBreakdown.present2}", fontSize = 12.sp)
+                            Text("Present 15: ${monthReport.priorityBreakdown.present15}", fontSize = 12.sp)
+                            Text("Future 1: ${monthReport.priorityBreakdown.future1}", fontSize = 12.sp)
+                            Text("Future 2: ${monthReport.priorityBreakdown.future2}", fontSize = 12.sp)
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text("Accomplishments", fontSize = 14.sp, fontWeight = FontWeight.Bold)

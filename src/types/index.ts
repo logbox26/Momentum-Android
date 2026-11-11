@@ -3,14 +3,57 @@
  * Designed to mirror Kotlin Jetpack Compose + Room entities
  */
 
-export type Priority = 'Present 1' | 'Present 5' | 'Later 1' | 'Later 5';
+export type Priority =
+  | 'Present 1'
+  | 'Present 2'
+  | 'Present 15'
+  | 'Future 1'
+  | 'Future 2'
+  | 'Trashable';
 
 export const PRIORITY_OPTIONS: readonly Priority[] = [
   'Present 1',
-  'Present 5',
-  'Later 1',
-  'Later 5',
+  'Present 2',
+  'Present 15',
+  'Future 1',
+  'Future 2',
+  'Trashable',
 ] as const;
+
+/**
+ * Normalizes legacy and current priority strings safely.
+ * Maps:
+ * - Present 1 -> Present 1
+ * - Present 5 -> Present 2
+ * - Later 1 -> Future 1
+ * - Later 5 -> Future 2
+ */
+export function normalizePriority(raw: string | undefined | null): Priority {
+  if (!raw) return 'Present 1';
+  const trimmed = raw.trim();
+  switch (trimmed) {
+    case 'Present 1':
+      return 'Present 1';
+    case 'Present 5':
+      return 'Present 2';
+    case 'Present 2':
+      return 'Present 2';
+    case 'Present 15':
+      return 'Present 15';
+    case 'Later 1':
+      return 'Future 1';
+    case 'Future 1':
+      return 'Future 1';
+    case 'Later 5':
+      return 'Future 2';
+    case 'Future 2':
+      return 'Future 2';
+    case 'Trashable':
+      return 'Trashable';
+    default:
+      return 'Present 1';
+  }
+}
 
 export type TaskStatus = 'PENDING' | 'COMPLETED' | 'POSTPONED';
 
@@ -52,8 +95,8 @@ export interface TaskHistoryEntity {
     newStatus?: TaskStatus;
     previousDueDate?: string | null;
     newDueDate?: string | null;
-    previousPriority?: Priority;
-    newPriority?: Priority;
+    previousPriority?: Priority | string;
+    newPriority?: Priority | string;
     previousCategoryId?: string | null;
     newCategoryId?: string | null;
     categoryName?: string | null;
@@ -150,9 +193,10 @@ export interface ReportsFourTiles {
   unfinished: {
     total: number;
     present1: number;
-    present5: number;
-    later1: number;
-    later5: number;
+    present2: number;
+    present15: number;
+    future1: number;
+    future2: number;
   };
 }
 

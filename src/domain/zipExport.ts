@@ -324,13 +324,24 @@ class MomentumApplication : Application() {
 
 enum class Priority(val label: String) {
     PRESENT_1("Present 1"),
-    PRESENT_5("Present 5"),
-    LATER_1("Later 1"),
-    LATER_5("Later 5");
+    PRESENT_2("Present 2"),
+    PRESENT_15("Present 15"),
+    FUTURE_1("Future 1"),
+    FUTURE_2("Future 2"),
+    TRASHABLE("Trashable");
 
     companion object {
-        fun fromLabel(label: String): Priority {
-            return entries.find { it.label == label } ?: PRESENT_1
+        fun fromLabel(label: String?): Priority {
+            if (label == null) return PRESENT_1
+            val trimmed = label.trim()
+            entries.find { it.label.equals(trimmed, ignoreCase = true) || it.name.equals(trimmed, ignoreCase = true) }?.let { return it }
+            return when {
+                trimmed.equals("Present 1", ignoreCase = true) || trimmed.equals("PRESENT_1", ignoreCase = true) -> PRESENT_1
+                trimmed.equals("Present 5", ignoreCase = true) || trimmed.equals("PRESENT_5", ignoreCase = true) -> PRESENT_2
+                trimmed.equals("Later 1", ignoreCase = true) || trimmed.equals("LATER_1", ignoreCase = true) -> FUTURE_1
+                trimmed.equals("Later 5", ignoreCase = true) || trimmed.equals("LATER_5", ignoreCase = true) -> FUTURE_2
+                else -> PRESENT_1
+            }
         }
     }
 }
@@ -375,9 +386,10 @@ object HistoryEventType {
 
 data class PriorityBreakdown(
     val present1: Int = 0,
-    val present5: Int = 0,
-    val later1: Int = 0,
-    val later5: Int = 0
+    val present2: Int = 0,
+    val present15: Int = 0,
+    val future1: Int = 0,
+    val future2: Int = 0
 )
 
 data class FourTilesResult(

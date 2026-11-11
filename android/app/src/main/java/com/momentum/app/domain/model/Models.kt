@@ -28,9 +28,10 @@ object HistoryEventType {
 
 data class PriorityBreakdown(
     val present1: Int = 0,
-    val present5: Int = 0,
-    val later1: Int = 0,
-    val later5: Int = 0
+    val present2: Int = 0,
+    val present15: Int = 0,
+    val future1: Int = 0,
+    val future2: Int = 0
 )
 
 data class FourTilesResult(

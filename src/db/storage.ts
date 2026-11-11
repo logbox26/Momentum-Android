@@ -6,6 +6,7 @@ import {
   BackupPayload,
   Priority,
   ThemeId,
+  normalizePriority,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -104,7 +105,7 @@ function getInitialSeedData(): {
       notes: 'Maintained 5:20/km pace in Zone 2 cardio.',
       createdDate: now - 2 * oneDay,
       dueDate: todayStr,
-      priority: 'Present 5',
+      priority: 'Present 2',
       categoryId: 'cat_personal',
       status: 'COMPLETED',
       completedAt: now - 4 * 3600 * 1000,
@@ -132,7 +133,7 @@ function getInitialSeedData(): {
       notes: 'Ensure orphan tasks remain valid when categories are deleted.',
       createdDate: now - 1 * oneDay,
       dueDate: formatDateStr(new Date(now + oneDay)),
-      priority: 'Present 5',
+      priority: 'Present 2',
       categoryId: 'cat_learning',
       status: 'POSTPONED',
       completedAt: null,
@@ -160,7 +161,7 @@ function getInitialSeedData(): {
       notes: 'Drafted in prior month, finalized and completed this month.',
       createdDate: lastMonthCreated + 2 * oneDay,
       dueDate: todayStr,
-      priority: 'Later 1',
+      priority: 'Future 1',
       categoryId: 'cat_learning',
       status: 'COMPLETED',
       completedAt: now - 8 * 3600 * 1000, // completed this month!
@@ -174,7 +175,7 @@ function getInitialSeedData(): {
       notes: 'Investigate potential future cross-platform desktop target.',
       createdDate: now - 5 * oneDay,
       dueDate: formatDateStr(new Date(now + 7 * oneDay)),
-      priority: 'Later 5',
+      priority: 'Future 2',
       categoryId: 'cat_learning',
       status: 'PENDING',
       completedAt: null,
@@ -211,8 +212,8 @@ function getInitialSeedData(): {
       taskTitle: 'Morning 5km Cardio Run & Mobility',
       eventType: 'TASK_CREATED',
       timestamp: now - 2 * oneDay,
-      details: 'Task created with priority Present 5',
-      metadata: { newStatus: 'PENDING', newPriority: 'Present 5' },
+      details: 'Task created with priority Present 2',
+      metadata: { newStatus: 'PENDING', newPriority: 'Present 2' },
     },
     {
       id: 'hist_2_2',
@@ -240,8 +241,8 @@ function getInitialSeedData(): {
       taskTitle: 'Refactor Category Safe Deletion Flow',
       eventType: 'TASK_CREATED',
       timestamp: now - 1 * oneDay,
-      details: 'Task created with priority Present 5',
-      metadata: { newStatus: 'PENDING', newPriority: 'Present 5' },
+      details: 'Task created with priority Present 2',
+      metadata: { newStatus: 'PENDING', newPriority: 'Present 2' },
     },
     {
       id: 'hist_4_2',
@@ -283,7 +284,7 @@ function getInitialSeedData(): {
       eventType: 'TASK_CREATED',
       timestamp: lastMonthCreated + 2 * oneDay,
       details: 'Task created in prior month',
-      metadata: { newStatus: 'PENDING', newPriority: 'Later 1' },
+      metadata: { newStatus: 'PENDING', newPriority: 'Future 1' },
     },
     {
       id: 'hist_6_2',
@@ -310,8 +311,8 @@ function getInitialSeedData(): {
       taskTitle: 'Research Kotlin Multiplatform Compose for Desktop',
       eventType: 'TASK_CREATED',
       timestamp: now - 5 * oneDay,
-      details: 'Task created with priority Later 5',
-      metadata: { newStatus: 'PENDING', newPriority: 'Later 5' },
+      details: 'Task created with priority Future 2',
+      metadata: { newStatus: 'PENDING', newPriority: 'Future 2' },
     },
   ];
 
@@ -385,7 +386,11 @@ export class MomentumRepository {
   public getTasks(): TaskEntity[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.TASKS);
-      return raw ? JSON.parse(raw) : [];
+      const list: TaskEntity[] = raw ? JSON.parse(raw) : [];
+      return list.map((t) => ({
+        ...t,
+        priority: normalizePriority(t.priority),
+      }));
     } catch (e) {
       console.error('getTasks failed:', e);
       return [];
@@ -662,8 +667,22 @@ export class MomentumRepository {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.HISTORY);
       const list: TaskHistoryEntity[] = raw ? JSON.parse(raw) : [];
+      const normalized = list.map((h) => ({
+        ...h,
+        metadata: h.metadata
+          ? {
+              ...h.metadata,
+              previousPriority: h.metadata.previousPriority
+                ? normalizePriority(h.metadata.previousPriority)
+                : undefined,
+              newPriority: h.metadata.newPriority
+                ? normalizePriority(h.metadata.newPriority)
+                : undefined,
+            }
+          : undefined,
+      }));
       // Sorted chronologically descending (newest first)
-      return list.sort((a, b) => b.timestamp - a.timestamp);
+      return normalized.sort((a, b) => b.timestamp - a.timestamp);
     } catch (e) {
       console.error('getHistory failed:', e);
       return [];

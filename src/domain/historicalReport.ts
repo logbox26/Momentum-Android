@@ -7,6 +7,7 @@ import {
   TaskHistoryEntity,
   CategoryEntity,
   ReportsFourTiles,
+  normalizePriority,
 } from '../types';
 import { MomentumRepository } from '../db/storage';
 
@@ -101,9 +102,11 @@ export function reconstructMonthStats(
   let tasksCompletedCount = 0;
   const activeTaskPriorityCounts: Record<Priority, number> = {
     'Present 1': 0,
-    'Present 5': 0,
-    'Later 1': 0,
-    'Later 5': 0,
+    'Present 2': 0,
+    'Present 15': 0,
+    'Future 1': 0,
+    'Future 2': 0,
+    'Trashable': 0,
   };
 
   const categoryBreakdown: MonthlyStats['categoryBreakdown'] = {};
@@ -137,7 +140,7 @@ export function reconstructMonthStats(
     if (taskHistoryUpToMonthEnd.length === 0 && !taskRow) return;
 
     let reconstructedStatus: 'PENDING' | 'COMPLETED' | 'POSTPONED' | 'DELETED' = 'PENDING';
-    let reconstructedPriority: Priority = taskRow?.priority || 'Present 1';
+    let reconstructedPriority: Priority = normalizePriority(taskRow?.priority);
     let reconstructedCategoryId: string | null = taskRow?.categoryId || null;
     let reconstructedCategoryName = reconstructedCategoryId
       ? historicalCategoryMap.get(reconstructedCategoryId) || 'Uncategorized'
@@ -153,7 +156,7 @@ export function reconstructMonthStats(
         case 'TASK_CREATED':
           reconstructedStatus = 'PENDING';
           if (evt.metadata?.newPriority) {
-            reconstructedPriority = evt.metadata.newPriority as Priority;
+            reconstructedPriority = normalizePriority(evt.metadata.newPriority);
           }
           if (evt.metadata?.newCategoryId !== undefined) {
             reconstructedCategoryId = evt.metadata.newCategoryId;
@@ -186,7 +189,7 @@ export function reconstructMonthStats(
           break;
         case 'PRIORITY_CHANGED':
           if (evt.metadata?.newPriority) {
-            reconstructedPriority = evt.metadata.newPriority as Priority;
+            reconstructedPriority = normalizePriority(evt.metadata.newPriority);
           }
           break;
         case 'CATEGORY_CHANGED':
@@ -223,8 +226,11 @@ export function reconstructMonthStats(
         categoryName: reconstructedCategoryName,
       });
     } else if (reconstructedStatus === 'PENDING' || reconstructedStatus === 'POSTPONED') {
-      unfinishedCount++;
-      activeTaskPriorityCounts[reconstructedPriority]++;
+      // Do not count Trashable as unfinished
+      if (reconstructedPriority !== 'Trashable') {
+        unfinishedCount++;
+        activeTaskPriorityCounts[reconstructedPriority]++;
+      }
     }
   });
 
@@ -242,29 +248,37 @@ export function reconstructMonthStats(
     categoryBreakdown[catId].created++;
   });
 
-  // Calculate completion rate
-  const totalVolume = tasksCompletedCount + unfinishedCount;
+  // Calculate completion rate:
+  // "Future tasks should not be treated as failed simply because they were not completed."
+  const activePresentUnfinished =
+    activeTaskPriorityCounts['Present 1'] +
+    activeTaskPriorityCounts['Present 2'] +
+    activeTaskPriorityCounts['Present 15'];
+  const actionableVolume = tasksCompletedCount + activePresentUnfinished;
   const completionRate =
-    totalVolume > 0 ? Math.round((tasksCompletedCount / totalVolume) * 1000) / 10 : 0;
+    actionableVolume > 0 ? Math.round((tasksCompletedCount / actionableVolume) * 1000) / 10 : 0;
 
   // Priority breakdown
   const priorityBreakdown: MonthlyStats['priorityBreakdown'] = {
     'Present 1': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 1'] },
-    'Present 5': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 5'] },
-    'Later 1': { created: 0, completed: 0, active: activeTaskPriorityCounts['Later 1'] },
-    'Later 5': { created: 0, completed: 0, active: activeTaskPriorityCounts['Later 5'] },
+    'Present 2': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 2'] },
+    'Present 15': { created: 0, completed: 0, active: activeTaskPriorityCounts['Present 15'] },
+    'Future 1': { created: 0, completed: 0, active: activeTaskPriorityCounts['Future 1'] },
+    'Future 2': { created: 0, completed: 0, active: activeTaskPriorityCounts['Future 2'] },
+    'Trashable': { created: 0, completed: 0, active: 0 },
   };
 
   createdEvents.forEach((evt) => {
-    const p = (evt.metadata?.newPriority || 'Present 1') as Priority;
+    const p = normalizePriority(evt.metadata?.newPriority);
     if (priorityBreakdown[p]) {
       priorityBreakdown[p].created++;
     }
   });
 
   accomplishments.forEach((acc) => {
-    if (priorityBreakdown[acc.priority]) {
-      priorityBreakdown[acc.priority].completed++;
+    const p = normalizePriority(acc.priority);
+    if (priorityBreakdown[p]) {
+      priorityBreakdown[p].completed++;
     }
   });
 
@@ -384,7 +398,7 @@ export function getComparisonReport(
  * 1. Daily completion rate
  * 2. Weekly completion rate
  * 3. Monthly completion rate
- * 4. Number of unfinished tasks (broken down by Present 1, Present 5, Later 1, Later 5)
+ * 4. Number of unfinished tasks (broken down by Present 1, Present 2, Present 15, Future 1, Future 2)
  */
 export function calculateFourTiles(
   tasks: TaskEntity[],
@@ -470,12 +484,7 @@ export function calculateFourTiles(
   const monthlyTotal = monthStats.tasksCompleted + monthStats.unfinishedTasks;
   const monthlyRate = monthStats.completionRate;
 
-  // 4. Number of unfinished tasks (active pending or postponed)
-  const unfinishedTasks = tasks.filter((t) => t.status !== 'COMPLETED');
-  const p1 = unfinishedTasks.filter((t) => t.priority === 'Present 1').length;
-  const p5 = unfinishedTasks.filter((t) => t.priority === 'Present 5').length;
-  const l1 = unfinishedTasks.filter((t) => t.priority === 'Later 1').length;
-  const l5 = unfinishedTasks.filter((t) => t.priority === 'Later 5').length;
+  // 4. Number of unfinished tasks (active pending or postponed from reconstructed monthStats)
 
   return {
     daily: {
@@ -496,9 +505,10 @@ export function calculateFourTiles(
     unfinished: {
       total: monthStats.unfinishedTasks,
       present1: monthStats.priorityBreakdown['Present 1'].active,
-      present5: monthStats.priorityBreakdown['Present 5'].active,
-      later1: monthStats.priorityBreakdown['Later 1'].active,
-      later5: monthStats.priorityBreakdown['Later 5'].active,
+      present2: monthStats.priorityBreakdown['Present 2'].active,
+      present15: monthStats.priorityBreakdown['Present 15'].active,
+      future1: monthStats.priorityBreakdown['Future 1'].active,
+      future2: monthStats.priorityBreakdown['Future 2'].active,
     },
   };
 }

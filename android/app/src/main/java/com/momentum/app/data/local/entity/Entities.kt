@@ -8,7 +8,7 @@ import com.momentum.app.domain.model.TaskStatus
 
 /**
  * Momentum Task Entity
- * Priority is strictly one of: Present 1, Present 5, Later 1, Later 5.
+ * Priority is strictly one of: Present 1, Present 2, Present 15, Future 1, Future 2, Trashable.
  * Deleting a category sets categoryId to null without deleting the task.
  */
 @Entity(
@@ -21,7 +21,7 @@ data class TaskEntity(
     val notes: String = "",
     val createdDate: Long, // Epoch timestamp millis
     val dueDate: String, // Format: YYYY-MM-DD
-    val priority: Priority, // Exactly one of the 4 priorities
+    val priority: Priority, // Exactly one of the 6 priorities
     val categoryId: String? = null, // Nullable; task remains valid if category is removed
     val status: TaskStatus = TaskStatus.PENDING,
     val completedAt: Long? = null,

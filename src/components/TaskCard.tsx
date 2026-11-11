@@ -43,11 +43,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     switch (priority) {
       case 'Present 1':
         return 'text-rose-700 dark:text-rose-400 font-semibold whitespace-nowrap';
-      case 'Present 5':
+      case 'Present 2':
+        return 'text-orange-700 dark:text-orange-400 font-medium whitespace-nowrap';
+      case 'Present 15':
         return 'text-amber-700 dark:text-amber-400 font-medium whitespace-nowrap';
-      case 'Later 1':
+      case 'Future 1':
         return 'text-sky-700 dark:text-sky-400 font-medium whitespace-nowrap';
-      case 'Later 5':
+      case 'Future 2':
+        return 'text-slate-600 dark:text-slate-400 font-normal whitespace-nowrap';
+      case 'Trashable':
+        return 'text-gray-500 dark:text-gray-400 font-normal whitespace-nowrap';
+      default:
         return 'text-[var(--text-muted)] font-normal whitespace-nowrap';
     }
   };

@@ -224,7 +224,7 @@ export const ReportsView: React.FC = () => {
           1. Daily Completion Rate
           2. Weekly Completion Rate
           3. Monthly Completion Rate
-          4. No of Unfinished Tasks (Present 1, Present 5, Later 1, Later 5)
+          4. No of Unfinished Tasks (Present 1, Present 2, Present 15, Future 1, Future 2)
          ======================================================== */}
       <section aria-label="Core Performance Tiles" className="space-y-2">
         <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
@@ -346,8 +346,8 @@ export const ReportsView: React.FC = () => {
                 <span className="text-[11px] text-[var(--text-muted)]">active pending</span>
               </div>
 
-              {/* Exact breakdown: Present 1, Present 5, Later 1, Later 5 */}
-              <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px]">
+              {/* Exact breakdown: Present 1 / Present 2 / Present 15 / Future 1 / Future 2 */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px]">
                 <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
                   <span className="font-semibold text-rose-700 dark:text-rose-400">Present 1:</span>
                   <span className="font-bold tabular-nums text-[var(--text-primary)]">
@@ -355,21 +355,27 @@ export const ReportsView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-amber-700 dark:text-amber-400">Present 5:</span>
+                  <span className="font-semibold text-orange-700 dark:text-orange-400">Present 2:</span>
                   <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.present5}
+                    {fourTiles.unfinished.present2}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-sky-700 dark:text-sky-400">Later 1:</span>
+                  <span className="font-semibold text-amber-700 dark:text-amber-400">Present 15:</span>
                   <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.later1}
+                    {fourTiles.unfinished.present15}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-[var(--text-muted)]">Later 5:</span>
+                  <span className="font-semibold text-sky-700 dark:text-sky-400">Future 1:</span>
                   <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.later5}
+                    {fourTiles.unfinished.future1}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">Future 2:</span>
+                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                    {fourTiles.unfinished.future2}
                   </span>
                 </div>
               </div>
@@ -568,14 +574,14 @@ export const ReportsView: React.FC = () => {
                     Priority Workload Matrix ({stats.monthName})
                   </h3>
                   <p className="text-xs text-[var(--text-muted)]">
-                    Completed vs active workload across the four mandatory priority tiers.
+                    Completed vs active workload across priority tiers.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 {PRIORITY_OPTIONS.map((p) => {
-                  const data = stats.priorityBreakdown[p];
+                  const data = stats.priorityBreakdown[p] || { created: 0, completed: 0, active: 0 };
                   const total = data.completed + data.active;
                   const rate = total > 0 ? Math.round((data.completed / total) * 100) : 0;
 
