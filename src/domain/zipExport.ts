@@ -594,6 +594,43 @@ interface ReportCacheDao {
   );
 
   zip.file(
+    `${srcBase}/data/local/converter/Converters.kt`,
+    `package com.momentum.app.data.local.converter
+
+import androidx.room.TypeConverter
+import com.momentum.app.domain.model.Priority
+import com.momentum.app.domain.model.TaskStatus
+
+class Converters {
+    @TypeConverter
+    fun fromPriority(priority: Priority?): String {
+        return priority?.label ?: Priority.PRESENT_1.label
+    }
+
+    @TypeConverter
+    fun toPriority(value: String?): Priority {
+        return Priority.fromLabel(value)
+    }
+
+    @TypeConverter
+    fun fromTaskStatus(status: TaskStatus?): String {
+        return status?.name ?: TaskStatus.PENDING.name
+    }
+
+    @TypeConverter
+    fun toTaskStatus(value: String?): TaskStatus {
+        if (value == null) return TaskStatus.PENDING
+        return try {
+            TaskStatus.valueOf(value)
+        } catch (_: Exception) {
+            TaskStatus.PENDING
+        }
+    }
+}
+`
+  );
+
+  zip.file(
     `${srcBase}/data/local/MomentumDatabase.kt`,
     `package com.momentum.app.data.local
 
@@ -601,8 +638,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.momentum.app.data.local.dao.*
 import com.momentum.app.data.local.entity.*
+import com.momentum.app.data.local.converter.Converters
 
 @Database(
     entities = [
@@ -615,6 +654,7 @@ import com.momentum.app.data.local.entity.*
     version = 1,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class MomentumDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun taskHistoryDao(): TaskHistoryDao

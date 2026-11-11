@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.momentum.app.data.local.dao.*
+import com.momentum.app.data.local.entity.*
 import androidx.room.TypeConverters
 import com.momentum.app.data.local.converter.Converters
 
