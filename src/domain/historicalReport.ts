@@ -249,14 +249,17 @@ export function reconstructMonthStats(
   });
 
   // Calculate completion rate:
-  // "Future tasks should not be treated as failed simply because they were not completed."
-  const activePresentUnfinished =
+  // Only Present 1 and Present 2 count in completion percentages.
+  // Exclude Present 15, Future 1, Future 2, Trashable.
+  const completedPresent1Or2Count = accomplishments.filter(
+    (acc) => acc.priority === 'Present 1' || acc.priority === 'Present 2'
+  ).length;
+  const activePresent1Or2Unfinished =
     activeTaskPriorityCounts['Present 1'] +
-    activeTaskPriorityCounts['Present 2'] +
-    activeTaskPriorityCounts['Present 15'];
-  const actionableVolume = tasksCompletedCount + activePresentUnfinished;
+    activeTaskPriorityCounts['Present 2'];
+  const actionableVolume = completedPresent1Or2Count + activePresent1Or2Unfinished;
   const completionRate =
-    actionableVolume > 0 ? Math.round((tasksCompletedCount / actionableVolume) * 1000) / 10 : 0;
+    actionableVolume > 0 ? Math.round((completedPresent1Or2Count / actionableVolume) * 1000) / 10 : 0;
 
   // Priority breakdown
   const priorityBreakdown: MonthlyStats['priorityBreakdown'] = {
@@ -413,38 +416,54 @@ export function calculateFourTiles(
   todayStart.setHours(0, 0, 0, 0);
   const todayStartMs = todayStart.getTime();
 
-  // 1. Daily Completion Rate (unique task IDs completed today)
+  const isCountedPriority = (p: string | undefined | null) => {
+    const norm = normalizePriority(p);
+    return norm === 'Present 1' || norm === 'Present 2';
+  };
+
+  const getTaskPriority = (taskId: string): Priority => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) return normalizePriority(task.priority);
+    const taskEvents = history.filter((ev) => ev.taskId === taskId);
+    const lastPri = taskEvents
+      .filter((ev) => ev.metadata?.newPriority)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .pop()?.metadata?.newPriority;
+    return normalizePriority(lastPri);
+  };
+
+  // 1. Daily Completion Rate (unique task IDs completed today with Present 1 or Present 2)
   const dailyCompletedTaskIds = new Set<string>();
   history
     .filter((h) => h.eventType === 'TASK_COMPLETED' && h.timestamp >= todayStartMs)
     .forEach((h) => {
       const task = tasks.find((t) => t.id === h.taskId);
       if (task) {
-        if (task.status === 'COMPLETED') {
+        if (task.status === 'COMPLETED' && isCountedPriority(task.priority)) {
           dailyCompletedTaskIds.add(h.taskId);
         }
       } else {
         const taskEvents = history.filter((ev) => ev.taskId === h.taskId);
         const lastEvt = taskEvents.sort((a, b) => a.timestamp - b.timestamp)[taskEvents.length - 1];
-        if (lastEvt?.eventType === 'TASK_COMPLETED') {
+        if (lastEvt?.eventType === 'TASK_COMPLETED' && isCountedPriority(getTaskPriority(h.taskId))) {
           dailyCompletedTaskIds.add(h.taskId);
         }
       }
     });
   tasks.forEach((t) => {
-    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= todayStartMs) {
+    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= todayStartMs && isCountedPriority(t.priority)) {
       dailyCompletedTaskIds.add(t.id);
     }
   });
   const pendingDueTodayTasks = tasks.filter(
-    (t) => t.status !== 'COMPLETED' && t.dueDate === todayStr
+    (t) => t.status !== 'COMPLETED' && t.dueDate === todayStr && isCountedPriority(t.priority)
   );
   const dailyCompleted = dailyCompletedTaskIds.size;
   const dailyTotal = dailyCompleted + pendingDueTodayTasks.length;
   const dailyRate =
     dailyTotal > 0 ? Math.round((dailyCompleted / dailyTotal) * 1000) / 10 : dailyCompleted > 0 ? 100 : 0;
 
-  // 2. Weekly Completion Rate (past 7 days window - unique task IDs)
+  // 2. Weekly Completion Rate (past 7 days window - unique task IDs with Present 1 or Present 2)
   const sevenDaysAgoMs = now - 7 * 24 * 60 * 60 * 1000;
   const weeklyCompletedTaskIds = new Set<string>();
   history
@@ -452,26 +471,26 @@ export function calculateFourTiles(
     .forEach((h) => {
       const task = tasks.find((t) => t.id === h.taskId);
       if (task) {
-        if (task.status === 'COMPLETED') {
+        if (task.status === 'COMPLETED' && isCountedPriority(task.priority)) {
           weeklyCompletedTaskIds.add(h.taskId);
         }
       } else {
         const taskEvents = history.filter((ev) => ev.taskId === h.taskId);
         const lastEvt = taskEvents.sort((a, b) => a.timestamp - b.timestamp)[taskEvents.length - 1];
-        if (lastEvt?.eventType === 'TASK_COMPLETED') {
+        if (lastEvt?.eventType === 'TASK_COMPLETED' && isCountedPriority(getTaskPriority(h.taskId))) {
           weeklyCompletedTaskIds.add(h.taskId);
         }
       }
     });
   tasks.forEach((t) => {
-    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= sevenDaysAgoMs) {
+    if (t.status === 'COMPLETED' && t.completedAt && t.completedAt >= sevenDaysAgoMs && isCountedPriority(t.priority)) {
       weeklyCompletedTaskIds.add(t.id);
     }
   });
   const weeklyCompleted = weeklyCompletedTaskIds.size;
 
-  // Active tasks due within this window or today
-  const activeWeeklyTasks = tasks.filter((t) => t.status !== 'COMPLETED');
+  // Active tasks due within this window or today with Present 1 or Present 2
+  const activeWeeklyTasks = tasks.filter((t) => t.status !== 'COMPLETED' && isCountedPriority(t.priority));
   const weeklyTotal = Math.max(weeklyCompleted + activeWeeklyTasks.length, 1);
   const weeklyRate =
     weeklyTotal > 0 ? Math.round((weeklyCompleted / weeklyTotal) * 1000) / 10 : 0;

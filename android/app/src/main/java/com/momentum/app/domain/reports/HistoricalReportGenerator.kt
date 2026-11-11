@@ -43,40 +43,54 @@ class HistoricalReportGenerator {
         // 7 days ago
         val weekAgoMs = todayStartMs - (6 * 86400000L)
 
-        // Daily: unique tasks completed today
+        fun isCounted(priority: Priority): Boolean {
+            return priority == Priority.PRESENT_1 || priority == Priority.PRESENT_2
+        }
+
+        fun getTaskPriority(taskId: String): Priority {
+            val task = tasks.firstOrNull { it.id == taskId }
+            if (task != null) return task.priority
+            val taskEvents = history.filter { it.taskId == taskId }
+            val lastPri = taskEvents.filter { it.newPriority != null }.maxByOrNull { it.timestamp }?.newPriority
+            return Priority.fromLabel(lastPri)
+        }
+
+        // Daily: unique tasks completed today (only Present 1 and Present 2 count)
         val dailyCompleted = history
             .filter { it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= todayStartMs }
             .map { it.taskId }
             .distinct()
             .count { taskId ->
                 val task = tasks.firstOrNull { it.id == taskId }
-                if (task != null) {
+                val isCompleted = if (task != null) {
                     task.status == com.momentum.app.domain.model.TaskStatus.COMPLETED
                 } else {
                     val taskEvents = history.filter { it.taskId == taskId }
                     taskEvents.maxByOrNull { it.timestamp }?.eventType == HistoryEventType.TASK_COMPLETED
                 }
+                isCompleted && isCounted(getTaskPriority(taskId))
             }
-        val dailyScheduled = tasks.count { it.dueDate == todayStr }
+        val dailyScheduled = tasks.count { it.dueDate == todayStr && isCounted(it.priority) }
         val dailyTotal = maxOf(dailyCompleted, dailyScheduled)
         val dailyRate = if (dailyTotal > 0) (dailyCompleted.toFloat() / dailyTotal.toFloat()) * 100f else 0f
 
-        // Weekly: unique tasks completed in past 7 days
+        // Weekly: unique tasks completed in past 7 days (only Present 1 and Present 2 count)
         val weeklyCompleted = history
             .filter { it.eventType == HistoryEventType.TASK_COMPLETED && it.timestamp >= weekAgoMs }
             .map { it.taskId }
             .distinct()
             .count { taskId ->
                 val task = tasks.firstOrNull { it.id == taskId }
-                if (task != null) {
+                val isCompleted = if (task != null) {
                     task.status == com.momentum.app.domain.model.TaskStatus.COMPLETED
                 } else {
                     val taskEvents = history.filter { it.taskId == taskId }
                     taskEvents.maxByOrNull { it.timestamp }?.eventType == HistoryEventType.TASK_COMPLETED
                 }
+                isCompleted && isCounted(getTaskPriority(taskId))
             }
         val weeklyActiveTasks = tasks.count {
-            it.createdDate >= weekAgoMs || (it.dueDate >= dateFormat.format(Date(weekAgoMs)) && it.dueDate <= todayStr)
+            isCounted(it.priority) && (it.createdDate >= weekAgoMs || (it.dueDate >= dateFormat.format(Date(weekAgoMs)) && it.dueDate <= todayStr))
         }
         val weeklyTotal = maxOf(weeklyCompleted, weeklyActiveTasks)
         val weeklyRate = if (weeklyTotal > 0) (weeklyCompleted.toFloat() / weeklyTotal.toFloat()) * 100f else 0f
@@ -163,6 +177,7 @@ class HistoricalReportGenerator {
 
         val accomplishmentsList = mutableListOf<String>()
         var completedCountInMonth = 0
+        var completedCountP1P2 = 0
 
         for (taskId in candidateTaskIds) {
             val taskRow = currentTaskMap[taskId]
@@ -241,6 +256,9 @@ class HistoricalReportGenerator {
             // Check if task completed in the target month and remained completed as of monthEndMs
             if (completedInTargetMonth && reconstructedStatus == "COMPLETED") {
                 completedCountInMonth++
+                if (reconstructedPriority == Priority.PRESENT_1 || reconstructedPriority == Priority.PRESENT_2) {
+                    completedCountP1P2++
+                }
                 val accomplishmentTitle = if (latestTitle.isNotBlank()) latestTitle else (taskRow?.title ?: "Task $taskId")
                 if (!accomplishmentsList.contains(accomplishmentTitle)) {
                     accomplishmentsList.add(accomplishmentTitle)
@@ -279,10 +297,10 @@ class HistoricalReportGenerator {
             }
         }
 
-        // Future tasks should not be treated as failed simply because they were not completed
-        val activePresentTasks = p1 + p2 + p15
-        val actionableVolume = completedCountInMonth + activePresentTasks
-        val completionRate = if (actionableVolume > 0) (completedCountInMonth.toFloat() / actionableVolume.toFloat()) * 100f else 0f
+        // Only Present 1 and Present 2 count in completion percentages
+        // Exclude Present 15, Future 1, Future 2, Trashable
+        val actionableVolume = completedCountP1P2 + p1 + p2
+        val completionRate = if (actionableVolume > 0) (completedCountP1P2.toFloat() / actionableVolume.toFloat()) * 100f else 0f
 
         return MonthlyReportResult(
             year = year,
