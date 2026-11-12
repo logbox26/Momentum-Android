@@ -165,7 +165,8 @@ fun ReportsScreen(
                             ) {
                                 Text(
                                     text = msg.text,
-                                    fontSize = 11.sp,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
                                     color = if (isUser) Color.White else colors.textPrimary
                                 )
                             }

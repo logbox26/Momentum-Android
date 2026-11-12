@@ -39,7 +39,7 @@ function renderInline(text: string): React.ReactNode[] {
       parts.push(
         <code
           key={match.index}
-          className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-[11px]"
+          className="px-1 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-[0.9em]"
         >
           {match[4]}
         </code>
@@ -97,7 +97,7 @@ export const FormattedMarkdown: React.FC<FormattedMarkdownProps> = ({
       elements.push(
         <h4
           key={`h_${i}`}
-          className="font-bold text-xs sm:text-sm text-[var(--text-primary)] mt-2 mb-1"
+          className="font-bold text-[1.07em] text-[var(--text-primary)] mt-2 mb-1"
         >
           {renderInline(headerText)}
         </h4>
@@ -110,7 +110,7 @@ export const FormattedMarkdown: React.FC<FormattedMarkdownProps> = ({
       inList = true;
       const bulletText = trimmed.replace(/^(\*|-|•)\s*/, '');
       listItems.push(
-        <li key={`li_${i}`} className="text-xs leading-relaxed">
+        <li key={`li_${i}`} className="leading-relaxed">
           {renderInline(bulletText)}
         </li>
       );
@@ -122,7 +122,7 @@ export const FormattedMarkdown: React.FC<FormattedMarkdownProps> = ({
     if (numMatch) {
       flushList();
       elements.push(
-        <div key={`num_${i}`} className="flex items-start gap-1.5 my-1 text-xs">
+        <div key={`num_${i}`} className="flex items-start gap-1.5 my-1">
           <span className="font-bold text-[var(--accent-primary)] shrink-0 tabular-nums">
             {numMatch[1]}.
           </span>
@@ -135,7 +135,7 @@ export const FormattedMarkdown: React.FC<FormattedMarkdownProps> = ({
     // Regular line / paragraph
     flushList();
     elements.push(
-      <p key={`p_${i}`} className="my-1 text-xs leading-relaxed">
+      <p key={`p_${i}`} className="my-1 leading-relaxed">
         {renderInline(trimmed)}
       </p>
     );

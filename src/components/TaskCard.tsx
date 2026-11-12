@@ -111,7 +111,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <div className="flex items-start justify-between gap-2">
             <h3
               onClick={() => onEdit(task)}
-              className={`text-sm font-semibold cursor-pointer transition-colors ${
+              className={`text-[16px] font-semibold cursor-pointer transition-colors leading-snug ${
                 isCompleted
                   ? 'text-[var(--text-muted)] line-through decoration-[var(--text-muted)]/50'
                   : 'text-[var(--text-primary)] hover:text-[var(--accent-primary)]'

@@ -132,7 +132,7 @@ fun TaskItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.Top
         ) {
             Checkbox(
@@ -154,7 +154,8 @@ fun TaskItemCard(
                 ) {
                     Text(
                         text = task.title,
-                        fontSize = 15.sp,
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (isCompleted) colors.textMuted else colors.textPrimary,
                         modifier = Modifier.weight(1f, fill = false)
@@ -239,7 +240,7 @@ fun TaskItemCard(
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = onPostpone, modifier = Modifier.size(28.dp)) {
+                        IconButton(onClick = onPostpone, modifier = Modifier.size(30.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Schedule,
                                 contentDescription = "Postpone",
@@ -247,7 +248,7 @@ fun TaskItemCard(
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        IconButton(onClick = onViewHistory, modifier = Modifier.size(28.dp)) {
+                        IconButton(onClick = onViewHistory, modifier = Modifier.size(30.dp)) {
                             Icon(
                                 imageVector = Icons.Default.History,
                                 contentDescription = "History",
@@ -255,7 +256,7 @@ fun TaskItemCard(
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(30.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete",

@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
@@ -35,7 +37,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val scope = rememberCoroutineScope()
             var currentTheme by remember { mutableStateOf(ThemeMode.CALM_BLUE) }
-            var currentScreen by remember { mutableStateOf("home") } // "home", "reports", "settings"
+            val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
 
             LaunchedEffect(Unit) {
                 currentTheme = repository.getSelectedTheme()
@@ -50,9 +52,9 @@ class MainActivity : ComponentActivity() {
                         TopAppBar(
                             title = {
                                 Text(
-                                    text = when (currentScreen) {
-                                        "reports" -> "Reports & Analytics"
-                                        "settings" -> "Settings"
+                                    text = when (pagerState.currentPage) {
+                                        1 -> "Reports & Analytics"
+                                        2 -> "Settings"
                                         else -> "Momentum"
                                     },
                                     fontSize = 18.sp,
@@ -71,34 +73,40 @@ class MainActivity : ComponentActivity() {
                             tonalElevation = 8.dp
                         ) {
                             NavigationBarItem(
-                                selected = currentScreen == "home",
-                                onClick = { currentScreen = "home" },
+                                selected = pagerState.currentPage == 0,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
                                 icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                                 label = { Text("Home", fontSize = 11.sp) }
                             )
                             NavigationBarItem(
-                                selected = currentScreen == "reports",
-                                onClick = { currentScreen = "reports" },
+                                selected = pagerState.currentPage == 1,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
                                 icon = { Icon(Icons.Default.BarChart, contentDescription = "Reports") },
                                 label = { Text("Reports", fontSize = 11.sp) }
                             )
                             NavigationBarItem(
-                                selected = currentScreen == "settings",
-                                onClick = { currentScreen = "settings" },
+                                selected = pagerState.currentPage == 2,
+                                onClick = { scope.launch { pagerState.animateScrollToPage(2) } },
                                 icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                                 label = { Text("Settings", fontSize = 11.sp) }
                             )
                         }
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        when (currentScreen) {
-                            "home" -> HomeScreen(repository = repository)
-                            "reports" -> ReportsScreen(
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        userScrollEnabled = true
+                    ) { page ->
+                        when (page) {
+                            0 -> HomeScreen(repository = repository)
+                            1 -> ReportsScreen(
                                 repository = repository,
                                 geminiApiClient = app.geminiApiClient
                             )
-                            "settings" -> SettingsScreen(
+                            2 -> SettingsScreen(
                                 repository = repository,
                                 backupRepository = backupRepository,
                                 currentTheme = currentTheme,

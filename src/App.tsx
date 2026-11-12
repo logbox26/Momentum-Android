@@ -7,20 +7,88 @@ import { ReportsView } from './views/ReportsView';
 import { SettingsView } from './views/SettingsView';
 import { WifiOff, Battery, Wifi } from 'lucide-react';
 
+const TABS: Array<'home' | 'reports' | 'settings'> = ['home', 'reports', 'settings'];
+
 const AppContent: React.FC = () => {
-  const { activeTab, deviceFrameEnabled } = useMomentum();
+  const { activeTab, setActiveTab, deviceFrameEnabled } = useMomentum();
+
+  const mainRef = React.useRef<HTMLElement>(null);
+  const swipeStartX = React.useRef<number | null>(null);
+  const swipeStartY = React.useRef<number | null>(null);
+
+  React.useLayoutEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    if (!deviceFrameEnabled) {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab, deviceFrameEnabled]);
+
+  const handleSwipe = (deltaX: number, deltaY: number) => {
+    // Requires at least 45px horizontal travel and horizontal dominance to protect vertical scroll
+    if (Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
+      const currentIndex = TABS.indexOf(activeTab);
+      if (deltaX < 0 && currentIndex < TABS.length - 1) {
+        // Swipe left -> next tab
+        setActiveTab(TABS[currentIndex + 1]);
+      } else if (deltaX > 0 && currentIndex > 0) {
+        // Swipe right -> previous tab
+        setActiveTab(TABS[currentIndex - 1]);
+      }
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    swipeStartX.current = e.touches[0].clientX;
+    swipeStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (swipeStartX.current === null || swipeStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - swipeStartX.current;
+    const deltaY = e.changedTouches[0].clientY - swipeStartY.current;
+    handleSwipe(deltaX, deltaY);
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button === 0) {
+      swipeStartX.current = e.clientX;
+      swipeStartY.current = e.clientY;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && swipeStartX.current !== null && swipeStartY.current !== null) {
+      const deltaX = e.clientX - swipeStartX.current;
+      const deltaY = e.clientY - swipeStartY.current;
+      handleSwipe(deltaX, deltaY);
+      swipeStartX.current = null;
+      swipeStartY.current = null;
+    }
+  };
 
   const renderActiveView = () => {
-    switch (activeTab) {
-      case 'home':
-        return <HomeView />;
-      case 'reports':
-        return <ReportsView />;
-      case 'settings':
-        return <SettingsView />;
-      default:
-        return <HomeView />;
-    }
+    const view = (() => {
+      switch (activeTab) {
+        case 'home':
+          return <HomeView />;
+        case 'reports':
+          return <ReportsView />;
+        case 'settings':
+          return <SettingsView />;
+        default:
+          return <HomeView />;
+      }
+    })();
+
+    return (
+      <div key={activeTab} className="transition-opacity duration-150 ease-out">
+        {view}
+      </div>
+    );
   };
 
   if (!deviceFrameEnabled) {
@@ -28,7 +96,14 @@ const AppContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)] flex flex-col transition-colors duration-200">
         <TopAppBar />
-        <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5">
+        <main
+          ref={mainRef}
+          className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+        >
           {renderActiveView()}
         </main>
         <BottomNavBar />
@@ -55,7 +130,14 @@ const AppContent: React.FC = () => {
         <TopAppBar />
 
         {/* Scrollable Screen Content */}
-        <main className="flex-1 overflow-y-auto px-4 pt-4 scrollbar-none">
+        <main
+          ref={mainRef}
+          className="flex-1 overflow-y-auto px-4 pt-4 scrollbar-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+        >
           {renderActiveView()}
         </main>
 

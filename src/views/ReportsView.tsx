@@ -65,7 +65,8 @@ export const ReportsView: React.FC = () => {
   const [inputPrompt, setInputPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const didMountChatRef = useRef(false);
 
   // Available months list for picker
   const availableMonths = useMemo(() => {
@@ -97,9 +98,16 @@ export const ReportsView: React.FC = () => {
 
   const stats = singleMonthResult?.stats;
 
-  // Auto-scroll chat to bottom when messages update
+  // Auto-scroll inner chat log to bottom only when messages update after mount
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!didMountChatRef.current) {
+      didMountChatRef.current = true;
+      return;
+    }
+    const el = chatContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [geminiMessages, isAiLoading]);
 
   // Handle Gemini Chat message send
@@ -457,13 +465,13 @@ export const ReportsView: React.FC = () => {
         </div>
 
         {/* Chat Messages Log */}
-        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 py-1">
+        <div ref={chatContainerRef} className="space-y-3 max-h-[300px] overflow-y-auto pr-1 py-1">
           {geminiMessages.map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <div
                 key={msg.id}
-                className={`flex items-start gap-2.5 text-xs ${
+                className={`flex items-start gap-2.5 text-[13.5px] ${
                   isUser ? 'justify-end' : 'justify-start'
                 }`}
               >
@@ -503,7 +511,6 @@ export const ReportsView: React.FC = () => {
             </div>
           )}
 
-          <div ref={chatBottomRef} />
         </div>
 
         {/* Input Bar */}
