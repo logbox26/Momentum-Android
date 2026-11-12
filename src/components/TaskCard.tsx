@@ -66,10 +66,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
-  const handleDelete = () => {
-    if (window.confirm(`Delete "${task.title}"? This action will be recorded in task history.`)) {
-      deleteTask(task.id);
-    }
+  const handleDelete = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    deleteTask(task.id);
     setMenuOpen(false);
   };
 

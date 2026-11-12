@@ -249,17 +249,23 @@ export function reconstructMonthStats(
   });
 
   // Calculate completion rate:
-  // Only Present 1 and Present 2 count in completion percentages.
-  // Exclude Present 15, Future 1, Future 2, Trashable.
-  const completedPresent1Or2Count = accomplishments.filter(
-    (acc) => acc.priority === 'Present 1' || acc.priority === 'Present 2'
+  // Only Present 1, Present 2, Future 1, Future 2 count in completion percentages.
+  // Exclude Present 15, Trashable.
+  const completedCounted = accomplishments.filter(
+    (acc) =>
+      acc.priority === 'Present 1' ||
+      acc.priority === 'Present 2' ||
+      acc.priority === 'Future 1' ||
+      acc.priority === 'Future 2'
   ).length;
-  const activePresent1Or2Unfinished =
+  const activeCountedUnfinished =
     activeTaskPriorityCounts['Present 1'] +
-    activeTaskPriorityCounts['Present 2'];
-  const actionableVolume = completedPresent1Or2Count + activePresent1Or2Unfinished;
+    activeTaskPriorityCounts['Present 2'] +
+    activeTaskPriorityCounts['Future 1'] +
+    activeTaskPriorityCounts['Future 2'];
+  const actionableVolume = completedCounted + activeCountedUnfinished;
   const completionRate =
-    actionableVolume > 0 ? Math.round((completedPresent1Or2Count / actionableVolume) * 1000) / 10 : 0;
+    actionableVolume > 0 ? Math.round((completedCounted / actionableVolume) * 1000) / 10 : 0;
 
   // Priority breakdown
   const priorityBreakdown: MonthlyStats['priorityBreakdown'] = {
@@ -418,7 +424,12 @@ export function calculateFourTiles(
 
   const isCountedPriority = (p: string | undefined | null) => {
     const norm = normalizePriority(p);
-    return norm === 'Present 1' || norm === 'Present 2';
+    return (
+      norm === 'Present 1' ||
+      norm === 'Present 2' ||
+      norm === 'Future 1' ||
+      norm === 'Future 2'
+    );
   };
 
   const getTaskPriority = (taskId: string): Priority => {

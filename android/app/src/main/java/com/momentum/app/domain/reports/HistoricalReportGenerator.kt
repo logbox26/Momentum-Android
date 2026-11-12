@@ -44,7 +44,8 @@ class HistoricalReportGenerator {
         val weekAgoMs = todayStartMs - (6 * 86400000L)
 
         fun isCounted(priority: Priority): Boolean {
-            return priority == Priority.PRESENT_1 || priority == Priority.PRESENT_2
+            return priority == Priority.PRESENT_1 || priority == Priority.PRESENT_2 ||
+                   priority == Priority.FUTURE_1 || priority == Priority.FUTURE_2
         }
 
         fun getTaskPriority(taskId: String): Priority {
@@ -256,7 +257,8 @@ class HistoricalReportGenerator {
             // Check if task completed in the target month and remained completed as of monthEndMs
             if (completedInTargetMonth && reconstructedStatus == "COMPLETED") {
                 completedCountInMonth++
-                if (reconstructedPriority == Priority.PRESENT_1 || reconstructedPriority == Priority.PRESENT_2) {
+                if (reconstructedPriority == Priority.PRESENT_1 || reconstructedPriority == Priority.PRESENT_2 ||
+                    reconstructedPriority == Priority.FUTURE_1 || reconstructedPriority == Priority.FUTURE_2) {
                     completedCountP1P2++
                 }
                 val accomplishmentTitle = if (latestTitle.isNotBlank()) latestTitle else (taskRow?.title ?: "Task $taskId")
@@ -297,9 +299,9 @@ class HistoricalReportGenerator {
             }
         }
 
-        // Only Present 1 and Present 2 count in completion percentages
-        // Exclude Present 15, Future 1, Future 2, Trashable
-        val actionableVolume = completedCountP1P2 + p1 + p2
+        // Only Present 1, Present 2, Future 1, Future 2 count in completion percentages
+        // Exclude Present 15, Trashable
+        val actionableVolume = completedCountP1P2 + p1 + p2 + f1 + f2
         val completionRate = if (actionableVolume > 0) (completedCountP1P2.toFloat() / actionableVolume.toFloat()) * 100f else 0f
 
         return MonthlyReportResult(

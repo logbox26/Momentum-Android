@@ -59,6 +59,7 @@ export const ReportsView: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
   const [compMonthA, setCompMonthA] = useState<string>(currentMonthStr);
   const [compMonthB, setCompMonthB] = useState<string>(prevMonthStr);
+  const [unfinishedTileActive, setUnfinishedTileActive] = useState(false);
 
   // Gemini Chat UI State
   const [inputPrompt, setInputPrompt] = useState('');
@@ -327,13 +328,26 @@ export const ReportsView: React.FC = () => {
             </div>
           </div>
 
-          {/* Tile 4: Number of Unfinished Tasks with Present1, Present5, Later1, Later5 */}
-          <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex flex-col justify-between transition-all">
+          {/* Tile 4: Number of Unfinished Tasks with Present 1, Present 2, Present 15, Future 1, Future 2 */}
+          <div
+            onClick={() => setUnfinishedTileActive(true)}
+            className={`p-4 rounded-2xl flex flex-col justify-between transition-all cursor-pointer ${
+              unfinishedTileActive
+                ? 'bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs ring-1 ring-rose-500/20'
+                : 'bg-[var(--bg-surface)]/60 border border-dashed border-[var(--border-subtle)] opacity-60 hover:opacity-85'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--text-secondary)]">
                 Unfinished Tasks
               </span>
-              <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                  unfinishedTileActive
+                    ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
+                    : 'bg-slate-100 dark:bg-slate-800 text-[var(--text-muted)]'
+                }`}
+              >
                 <Clock className="w-4 h-4" />
               </div>
             </div>
@@ -346,39 +360,45 @@ export const ReportsView: React.FC = () => {
                 <span className="text-[11px] text-[var(--text-muted)]">active pending</span>
               </div>
 
-              {/* Exact breakdown: Present 1 / Present 2 / Present 15 / Future 1 / Future 2 */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px]">
-                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-rose-700 dark:text-rose-400">Present 1:</span>
-                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.present1}
-                  </span>
+              {/* Exact breakdown revealed when active */}
+              {unfinishedTileActive ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-[var(--border-subtle)] text-[11px]">
+                  <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                    <span className="font-semibold text-rose-700 dark:text-rose-400">Present 1:</span>
+                    <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                      {fourTiles.unfinished.present1}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                    <span className="font-semibold text-orange-700 dark:text-orange-400">Present 2:</span>
+                    <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                      {fourTiles.unfinished.present2}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                    <span className="font-semibold text-amber-700 dark:text-amber-400">Present 15:</span>
+                    <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                      {fourTiles.unfinished.present15}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                    <span className="font-semibold text-sky-700 dark:text-sky-400">Future 1:</span>
+                    <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                      {fourTiles.unfinished.future1}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
+                    <span className="font-semibold text-slate-600 dark:text-slate-400">Future 2:</span>
+                    <span className="font-bold tabular-nums text-[var(--text-primary)]">
+                      {fourTiles.unfinished.future2}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-orange-700 dark:text-orange-400">Present 2:</span>
-                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.present2}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-amber-700 dark:text-amber-400">Present 15:</span>
-                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.present15}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-sky-700 dark:text-sky-400">Future 1:</span>
-                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.future1}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-[var(--bg-surface-elevated)]">
-                  <span className="font-semibold text-slate-600 dark:text-slate-400">Future 2:</span>
-                  <span className="font-bold tabular-nums text-[var(--text-primary)]">
-                    {fourTiles.unfinished.future2}
-                  </span>
-                </div>
-              </div>
+              ) : (
+                <p className="text-[10px] text-[var(--text-muted)] mt-2 italic">
+                  Tap to reveal priority breakdown
+                </p>
+              )}
             </div>
           </div>
         </div>

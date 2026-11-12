@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -312,14 +313,22 @@ fun FourTilesSection(tiles: FourTilesResult) {
                 modifier = Modifier.weight(1f)
             )
 
-            // Unfinished Tasks Tile with 4 Priorities
+            // Unfinished Tasks Tile (dim/subdued by default, reveals breakdown on tap)
+            var isUnfinishedActive by remember { mutableStateOf(false) }
+
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(12.dp)),
-                colors = CardDefaults.cardColors(containerColor = colors.surface),
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { isUnfinishedActive = true }
+                    .alpha(if (isUnfinishedActive) 1.0f else 0.6f),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isUnfinishedActive) colors.surface else colors.surface.copy(alpha = 0.6f)
+                ),
                 border = CardDefaults.outlinedCardBorder().copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(colors.border)
+                    brush = androidx.compose.ui.graphics.SolidColor(
+                        if (isUnfinishedActive) colors.primary.copy(alpha = 0.5f) else colors.border.copy(alpha = 0.5f)
+                    )
                 )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
@@ -335,25 +344,34 @@ fun FourTilesSection(tiles: FourTilesResult) {
                         fontWeight = FontWeight.Black,
                         color = colors.textPrimary
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Present 1: ${tiles.unfinishedByPriority.present1}  |  Present 2: ${tiles.unfinishedByPriority.present2}",
-                        fontSize = 10.sp,
-                        color = Color(0xFFDC2626),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Present 15: ${tiles.unfinishedByPriority.present15}",
-                        fontSize = 10.sp,
-                        color = Color(0xFFD97706),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Future 1: ${tiles.unfinishedByPriority.future1}  |  Future 2: ${tiles.unfinishedByPriority.future2}",
-                        fontSize = 10.sp,
-                        color = Color(0xFF2563EB),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    if (isUnfinishedActive) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Present 1: ${tiles.unfinishedByPriority.present1}  |  Present 2: ${tiles.unfinishedByPriority.present2}",
+                            fontSize = 10.sp,
+                            color = Color(0xFFDC2626),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Present 15: ${tiles.unfinishedByPriority.present15}",
+                            fontSize = 10.sp,
+                            color = Color(0xFFD97706),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Future 1: ${tiles.unfinishedByPriority.future1}  |  Future 2: ${tiles.unfinishedByPriority.future2}",
+                            fontSize = 10.sp,
+                            color = Color(0xFF2563EB),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Tap to reveal",
+                            fontSize = 10.sp,
+                            color = colors.textMuted
+                        )
+                    }
                 }
             }
         }
